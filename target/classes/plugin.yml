@@ -1,5 +1,0 @@
-name: Practice
-version: '${git.commit.id.abbrev}'
-main: net.lyragames.practice.PracticePlugin
-authors: [ Zowpy, HyperX ]
-softdepend: [ Multiverse-Core, SlimeWorldManager ]

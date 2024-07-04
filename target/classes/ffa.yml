@@ -1,9 +1,0 @@
-#
-# FFA Configurations
-#
-
-SPAWN: ""
-
-SAFE-ZONE:
-  MIN: ""
-  MAX: ""
