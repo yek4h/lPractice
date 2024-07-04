@@ -10,38 +10,38 @@ object ArenaRatingManager {
     val arenaRatings: MutableList<ArenaRating> = mutableListOf()
 
     fun load() {
-        if (PracticePlugin.instance.practiceMongo.arenaRatings.find().first() == null) return
+        val ratingsCollection = PracticePlugin.instance.mongoManager.arenaRatingsCollection
+        val documents = ratingsCollection.find().toList()
 
-        for (document in PracticePlugin.instance.practiceMongo.arenaRatings.find()) {
-            val arenaRating = ArenaRating(UUID.fromString(document.getString("uuid")), document.getInteger("stars"), UUID.fromString(document.getString("user")), document.getString("arena"))
+        if (documents.isEmpty()) return
 
+        documents.forEach { document ->
+            val arenaRating = ArenaRating(
+                UUID.fromString(document.getString("uuid")),
+                document.getInteger("stars"),
+                UUID.fromString(document.getString("user")),
+                document.getString("arena")
+            )
             arenaRatings.add(arenaRating)
         }
     }
 
-    fun getArenaRatings(arena: Arena): MutableList<ArenaRating> {
-        return arenaRatings.filter { it.arena.equals(arena.name, true) }.toCollection(mutableListOf())
+    fun getArenaRatings(arena: Arena): List<ArenaRating> {
+        return arenaRatings.filter { it.arena.equals(arena.name, true) }
     }
 
     fun hasRated(uuid: UUID, arena: Arena): Boolean {
-        return !getArenaRatings(arena).none { it.user == uuid && it.arena.equals(arena.name, true) }
+        return getArenaRatings(arena).any { it.user == uuid }
     }
 
     fun getAverageRating(arena: Arena): Double {
-        val stars5 = getUsersRated(5, arena)
-        val stars4 = getUsersRated(4, arena)
-        val stars3 = getUsersRated(3, arena)
-        val stars2 = getUsersRated(2, arena)
-        val stars1 = getUsersRated(1, arena)
+        val ratings = getArenaRatings(arena)
+        val totalRatings = ratings.sumOf { it.stars }
 
-        val totalRatings = stars5 * 5 + stars4 * 4 + stars3 * 3 + stars2 * 2 + stars1
-
-        return (totalRatings / arenaRatings.size).toDouble()
+        return if (ratings.isNotEmpty()) totalRatings.toDouble() / ratings.size else 0.0
     }
 
-    fun getUsersRated(int: Int, arena: Arena): Int {
-        val ratings = getArenaRatings(arena)
-
-        return ratings.filter { it.stars == int }.size
+    fun getUsersRated(stars: Int, arena: Arena): Int {
+        return getArenaRatings(arena).count { it.stars == stars }
     }
 }

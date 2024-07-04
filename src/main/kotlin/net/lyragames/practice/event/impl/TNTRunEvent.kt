@@ -7,7 +7,7 @@ import net.lyragames.practice.event.map.impl.TNTRunMap
 import net.lyragames.practice.event.player.EventPlayer
 import net.lyragames.practice.event.player.EventPlayerState
 import net.lyragames.practice.manager.EventManager
-import net.lyragames.practice.profile.Profile
+import net.lyragames.practice.PracticePlugin
 import net.lyragames.practice.profile.hotbar.Hotbar
 import net.lyragames.practice.utils.CC
 import net.lyragames.practice.utils.PlayerUtil
@@ -65,7 +65,7 @@ class TNTRunEvent(host: UUID, eventMap: EventMap) : Event(host, eventMap) {
         for (eventPlayer in playingPlayers) {
             eventPlayer.state = EventPlayerState.LOBBY
 
-            Hotbar.giveHotbar(Profile.getByUUID(eventPlayer.uuid)!!)
+            Hotbar.giveHotbar(PracticePlugin.instance.profileManager.findById(eventPlayer.uuid)!!)
             PlayerUtil.reset(eventPlayer.player)
         }
 

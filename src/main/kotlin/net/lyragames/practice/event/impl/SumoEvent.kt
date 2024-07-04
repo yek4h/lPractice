@@ -6,7 +6,7 @@ import net.lyragames.practice.event.map.EventMap
 import net.lyragames.practice.event.player.EventPlayer
 import net.lyragames.practice.event.player.EventPlayerState
 import net.lyragames.practice.manager.EventManager
-import net.lyragames.practice.profile.Profile
+import net.lyragames.practice.PracticePlugin
 import net.lyragames.practice.profile.hotbar.Hotbar
 import net.lyragames.practice.utils.CC
 import net.lyragames.practice.utils.PlayerUtil
@@ -75,7 +75,7 @@ class SumoEvent(host: UUID, eventMap: EventMap) : Event(host, eventMap) {
 
             eventPlayer.player.teleport(eventMap.spawn)
 
-            Hotbar.giveHotbar(Profile.getByUUID(eventPlayer.uuid)!!)
+            Hotbar.giveHotbar(PracticePlugin.instance.profileManager.findById(eventPlayer.uuid)!!)
             PlayerUtil.reset(eventPlayer.player)
         }
 

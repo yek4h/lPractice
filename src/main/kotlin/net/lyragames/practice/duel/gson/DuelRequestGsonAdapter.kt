@@ -1,6 +1,7 @@
 package net.lyragames.practice.duel.gson
 
 import com.google.gson.*
+import net.lyragames.practice.PracticePlugin
 import net.lyragames.practice.arena.Arena
 import net.lyragames.practice.duel.DuelRequest
 import net.lyragames.practice.kit.Kit
@@ -28,7 +29,7 @@ object DuelRequestGsonAdapter : JsonSerializer<DuelRequest>, JsonDeserializer<Du
 
         val request = DuelRequest(UUID.fromString(json.get("uuid").asString),
             UUID.fromString(json.get("target").asString),
-            Kit.getByName(json.get("kit").asString)!!,
+            PracticePlugin.instance.kitManager.getKit(json.get("kit").asString)!!,
             Arena.getByName(json.get("arena").asString)!!
         )
 

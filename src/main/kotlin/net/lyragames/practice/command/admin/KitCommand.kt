@@ -1,15 +1,15 @@
 package net.lyragames.practice.command.admin
 
-import co.aikar.commands.BaseCommand
-import co.aikar.commands.CommandHelp
-import co.aikar.commands.annotation.*
-
-import net.lyragames.practice.PracticePlugin
+import com.jonahseguin.drink.annotation.Command
+import com.jonahseguin.drink.annotation.Require
+import com.jonahseguin.drink.annotation.Sender
 import net.lyragames.practice.kit.Kit
 import net.lyragames.practice.kit.admin.AdminKitManageMenu
 import net.lyragames.practice.manager.QueueManager
+import net.lyragames.practice.PracticePlugin
 import net.lyragames.practice.profile.Profile
 import net.lyragames.practice.profile.statistics.KitStatistic
+import net.lyragames.practice.ui.kit.KitMenu
 import net.lyragames.practice.utils.CC
 import org.bukkit.GameMode
 import org.bukkit.Material
@@ -18,139 +18,143 @@ import org.bukkit.entity.Player
 import java.util.*
 import java.util.concurrent.CompletableFuture
 
-
-/**
- * This Project is property of Zowpy © 2022
- * Redistribution of this Project is not allowed
+/*
+ * This project can't be redistributed without
+ * authorization of the developer
  *
- * @author Zowpy
- * Created: 2/16/2022
- * Project: lPractice
- */
-@CommandPermission("lpractice.command.kit.setup")
-@CommandAlias("kit")
+ * Project @ lPractice
+ * @author yek4h © 2024
+ * Date: 17/06/2024
+*/
 
-object KitCommand: BaseCommand() {
+class KitCommand {
 
-    @HelpCommand
-    @Syntax("[page]")
-    fun help(help: CommandHelp) {
-        help.showHelp()
-        /*
-        player.sendMessage("${CC.PRIMARY}Kit Commands:")
-        player.sendMessage("${CC.SECONDARY}/kit create <name>")
-        player.sendMessage("${CC.SECONDARY}/kit delete <kit>")
-        player.sendMessage("${CC.SECONDARY}/kit displayname <kit> <name>")
-        player.sendMessage("${CC.SECONDARY}/kit content <kit>")
-        player.sendMessage("${CC.SECONDARY}/kit edit <kit>")
-        player.sendMessage("${CC.SECONDARY}/kit items <kit>")
-        player.sendMessage("${CC.SECONDARY}/kit icon <kit> ${CC.GRAY}- hold item in hand")
-
-         */
+    @Command(name = "", desc = "Kit setup commands")
+    @Require("practice.command.kit.setup")
+    fun help(@Sender sender: CommandSender) {
+        sender.sendMessage("""
+            ${CC.PRIMARY}Kit Commands:
+            ${CC.SECONDARY}/create <name> - Create a Kit
+            ${CC.SECONDARY}/content <kit> - Set the content of a Kit
+            ${CC.SECONDARY}/items <kit> - Receive the item of a Kit
+            ${CC.SECONDARY}/icon <kit> - Set the icon of a Kit
+            ${CC.SECONDARY}/displayname <kit> <name> - Set the display name of a Kit
+            ${CC.SECONDARY}/admin <kit> - Open the kit management menu
+            ${CC.SECONDARY}/manage - Open the general management menu
+        """.trimIndent())
     }
 
-    @Subcommand("create")
-    @Description("Create a Kit")
-
-    fun create(player: CommandSender, @Single @Name("name") name: String) {
-        if (Kit.getByName(name) != null) {
-            player.sendMessage(CC.RED + "That kit already exists!")
+    @Command(name = "create", desc = "Create a Kit")
+    @Require("practice.command.kit.create")
+    fun create(@Sender sender: CommandSender, name: String) {
+        if (PracticePlugin.instance.kitManager.getKit(name) != null) {
+            sender.sendMessage(CC.RED + "That kit already exists!")
             return
         }
 
-        val kit = Kit(name)
-        kit.save()
-        Kit.kits.add(kit)
+        PracticePlugin.instance.kitManager.createKit(name)
 
         CompletableFuture.runAsync {
-            for (document in PracticePlugin.instance.practiceMongo.profiles.find()) {
+            for (document in PracticePlugin.instance.mongoManager.profileCollection.find()) {
                 val profile = Profile(UUID.fromString(document.getString("_id")), null)
                 profile.load(document)
 
-                profile.kitStatistics.add(KitStatistic(kit.name))
-                profile.saveSync()
+                profile.kitStatistics.add(KitStatistic(name))
+                profile.save()
             }
         }
 
-        player.sendMessage("${CC.PRIMARY}Successfully created ${CC.SECONDARY}${kit.name}${CC.PRIMARY}!")
+        sender.sendMessage("${CC.PRIMARY}Successfully created ${CC.SECONDARY}$name${CC.PRIMARY}!")
     }
 
-    @Subcommand("content")
-    @Description("Set the content of a kit")
-    @CommandCompletion("@kits")
+    @Command(name = "content", desc = "Set the content of a kit")
+    @Require("practice.command.kit.content")
+    fun setContent(@Sender sender: CommandSender, kit: Kit) {
+        val player = sender as? Player ?: return
 
-    fun content( player: CommandSender, @Single @Name("kit") kit: Kit) {
-
-        if ((player as Player).gameMode != GameMode.SURVIVAL) {
+        if (player.gameMode != GameMode.SURVIVAL) {
             player.sendMessage("${CC.RED}You must be in survival mode to set inventory contents!")
             return
         }
 
         kit.content = player.inventory.contents.clone()
         kit.armorContent = player.inventory.armorContents.clone()
-        kit.save()
+        PracticePlugin.instance.kitManager.save()
 
         CompletableFuture.runAsync {
-            for (document in PracticePlugin.instance.practiceMongo.profiles.find()) {
+            for (document in PracticePlugin.instance.mongoManager.profileCollection.find()) {
                 val profile = Profile(UUID.fromString(document.getString("uuid")), document.getString("name"))
                 profile.load(document)
 
                 val editedKits = profile.getKitStatistic(kit.name)?.editedKits ?: continue
 
-                editedKits[0] = null
-                editedKits[1] = null
-                editedKits[2] = null
-                editedKits[3] = null
+                editedKits.fill(null)
 
-                profile.saveSync()
+                profile.save()
             }
         }
 
         player.sendMessage("${CC.PRIMARY}Successfully set ${CC.SECONDARY}${kit.name}${CC.PRIMARY}'s item contents!")
     }
 
-    @Subcommand("items")
-    @CommandCompletion("@kits")
-    @Description("Receive the item of a Kit")
-    fun items(player: CommandSender, @Single @Name("kit") kit: Kit) {
-        (player as Player).inventory.contents = kit.content
+    @Command(name = "items", desc = "Receive the item of a Kit")
+    @Require("practice.command.kit.items")
+    fun getItems(@Sender sender: CommandSender, kit: Kit) {
+        val player = sender as? Player ?: return
+
+        player.inventory.contents = kit.content
         player.inventory.armorContents = kit.armorContent
         player.sendMessage("${CC.PRIMARY}Successfully retrieved ${CC.SECONDARY}${kit.name}${CC.PRIMARY}'s item contents!")
     }
 
-    @Subcommand("icon")
-    @CommandCompletion("@kits")
-    @Description("Set the icon of a Kit")
+    @Command(name = "kb", desc = "Receive the item of a Kit")
+    @Require("practice.command.kit.kb")
+    fun setKb(@Sender sender: CommandSender, kit: Kit, string: String) {
+        val player = sender as? Player ?: return
 
-    fun displayItem(player: CommandSender, @Single @Name("kit") kit: Kit) {
-        if ((player as Player).itemInHand == null || player.itemInHand.type == Material.AIR) {
+        kit.knockbackProfile = string
+        player.sendMessage("${CC.PRIMARY}Successfully set ${CC.SECONDARY}${kit.name}${CC.PRIMARY} the kb named ${CC.SECONDARY}$string${CC.PRIMARY}!")
+    }
+
+    @Command(name = "icon", desc = "Set the icon of a Kit")
+    @Require("practice.command.kit.icon")
+    fun setIcon(@Sender sender: CommandSender, kit: Kit) {
+        val player = sender as? Player ?: return
+
+        if (player.itemInHand == null || player.itemInHand.type == Material.AIR) {
             player.sendMessage("${CC.RED}You are not holding an item!")
             return
         }
         kit.displayItem = player.itemInHand
-        kit.save()
+        PracticePlugin.instance.kitManager.save()
 
-        QueueManager.queues.filter { it.kit.name.equals(kit.name, false) }.forEach {
-            it.kit.displayItem = player.itemInHand
+        QueueManager.queues.filter { it.key.first.name.equals(kit.name, ignoreCase = true) }.forEach { (_, queue) ->
+            queue.kit.displayItem = player.itemInHand
         }
 
         player.sendMessage("${CC.PRIMARY}Successfully set ${CC.SECONDARY}${kit.name}${CC.PRIMARY}'s display item!")
     }
 
-    @Subcommand("admin")
-    @Description("Open the kit management menu")
-    @CommandCompletion("@kits")
-
-    fun edit(player: CommandSender, @Single @Name("kit") kit: Kit) {
-        AdminKitManageMenu(kit).openMenu(player as Player)
+    @Command(name = "admin", desc = "Open the kit management menu")
+    @Require("practice.command.kit.admin")
+    fun edit(@Sender sender: CommandSender, kit: Kit) {
+        val player = sender as? Player ?: return
+        AdminKitManageMenu(kit).openMenu(player)
     }
 
-    @Subcommand("displayname")
-    @Description("Set the name of a Kit")
-    @CommandCompletion("@kits")
+    @Command(name = "displayname", desc = "Set the name of a Kit")
+    @Require("practice.command.kit.displayname")
+    fun setDisplayName(@Sender sender: CommandSender, kit: Kit, name: String) {
+        val player = sender as? Player ?: return
 
-    fun displayName( player: Player, @Single @Name("kit") kit: Kit, @Single @Name("name") name: String) {
         kit.displayName = name
         player.sendMessage("${CC.YELLOW}You have updated ${CC.AQUA}${kit.name}${CC.YELLOW} to display as ${CC.GREEN}${kit.displayName}")
+    }
+
+    @Command(name = "manage", desc = "Open the general management menu")
+    @Require("practice.command.kit.manage")
+    fun manage(@Sender sender: CommandSender) {
+        val player = sender as? Player ?: return
+        KitMenu().openMenu(player)
     }
 }

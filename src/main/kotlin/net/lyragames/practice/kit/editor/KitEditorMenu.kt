@@ -1,12 +1,8 @@
 package net.lyragames.practice.kit.editor
 
 import lombok.AllArgsConstructor
-import me.zowpy.menu.Menu
-import me.zowpy.menu.buttons.Button
-import me.zowpy.menu.buttons.impl.DisplayButton
 import net.lyragames.practice.PracticePlugin
 import net.lyragames.practice.kit.EditedKit
-import net.lyragames.practice.profile.Profile
 import net.lyragames.practice.profile.ProfileState
 import net.lyragames.practice.profile.hotbar.Hotbar
 import net.lyragames.practice.utils.CC
@@ -18,6 +14,10 @@ import org.bukkit.event.inventory.ClickType
 import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.ItemStack
 import org.bukkit.scheduler.BukkitRunnable
+import rip.katz.api.menu.Button
+import rip.katz.api.menu.Menu
+import rip.katz.api.menu.buttons.DisplayButton
+import java.util.*
 
 
 /**
@@ -39,8 +39,8 @@ class KitEditorMenu(private val index: Int): Menu() {
     private val BORDER_BUTTON = Button.placeholder(Material.COAL_BLOCK, 0.toByte(), " ")
 
     override fun getTitle(player: Player): String {
-        val profile = Profile.getByUUID(player.uniqueId)
-        return "${CC.PRIMARY}Editing: ${CC.SECONDARY}" + profile?.kitEditorData?.kit?.name
+        val profile = PracticePlugin.instance.profileManager.findById(player.uniqueId)!!
+        return "${CC.PRIMARY}Editing: ${CC.SECONDARY}" + profile.kitEditorData?.kit?.name
     }
 
     override fun getButtons(player: Player): Map<Int, Button> {
@@ -54,30 +54,42 @@ class KitEditorMenu(private val index: Int): Menu() {
         buttons[7] = ClearInventoryButton()
         buttons[8] = CancelButton(index)
 
-        val profile = Profile.getByUUID(player.uniqueId)
-        val kit = profile?.kitEditorData?.kit
-        val kitLoadout: EditedKit? = profile?.kitEditorData?.selectedKit
+        val profile = PracticePlugin.instance.profileManager.findById(player.uniqueId)!!
+        //val kit = profile.kitEditorData?.kit
+        val kitLoadout: EditedKit? = profile.kitEditorData?.selectedKit
 
         buttons[18] = ArmorDisplayButton(kitLoadout?.armorContent?.get(3))
         buttons[27] = ArmorDisplayButton(kitLoadout?.armorContent?.get(2))
         buttons[36] = ArmorDisplayButton(kitLoadout?.armorContent?.get(1))
         buttons[45] = ArmorDisplayButton(kitLoadout?.armorContent?.get(0))
-      //  val items: Array<ItemStack>? = kit?.content//kit.getEditRules().getEditorItems()
-      //  if (!items?.isNotEmpty()!!) {
-        //    for (i: Int in items.indices) {
-          //      buttons[ITEM_POSITIONS[i]] = InfiniteItemButton(items[i])
-          //  }
-      //  }
+
+
+        Arrays.stream(kitLoadout?.editContents).forEach {
+            for (i in 20 until 26) {
+                var itemStack = it
+                itemStack = kitLoadout?.editContents?.get(i - 20) ?: return@forEach
+                if (itemStack != null) {
+                    buttons.remove(i)
+                    buttons[i] = RefillableItemButton(itemStack)
+                }
+            }
+        }
+      /*  val items: Array<ItemStack>? = kit?.content//kit.getEditRules().getEditorItems()
+        if (!items?.isNotEmpty()!!) {
+            for (i: Int in items.indices) {
+                buttons[ITEM_POSITIONS[i]] = InfiniteItemButton(items[i])
+            }
+        }*/
         return buttons
     }
 
     override fun onOpen(player: Player) {
         if (!isClosedByMenu) {
             PlayerUtil.reset(player)
-            val profile = Profile.getByUUID(player.uniqueId)
-            profile?.kitEditorData?.active = true
+            val profile = PracticePlugin.instance.profileManager.findById(player.uniqueId)!!
+            profile.kitEditorData?.active = true
 
-            if (profile?.kitEditorData?.selectedKit != null && profile.kitEditorData?.selectedKit?.content != null) {
+            if (profile.kitEditorData?.selectedKit != null && profile.kitEditorData?.selectedKit?.content != null) {
                 player.inventory.contents = profile.kitEditorData?.selectedKit?.content
             }
             player.updateInventory()
@@ -85,12 +97,12 @@ class KitEditorMenu(private val index: Int): Menu() {
     }
 
     override fun onClose(player: Player) {
-        val profile = Profile.getByUUID(player.uniqueId)
-        profile?.kitEditorData?.active = false
-        if (profile?.state != ProfileState.MATCH) {
+        val profile = PracticePlugin.instance.profileManager.findById(player.uniqueId)!!
+        profile.kitEditorData?.active = false
+        if (profile.state != ProfileState.MATCH) {
             object : BukkitRunnable() {
                 override fun run() {
-                    Hotbar.giveHotbar(profile!!)
+                    Hotbar.giveHotbar(profile)
                 }
             }.runTask(PracticePlugin.instance)
         }
@@ -110,9 +122,9 @@ class KitEditorMenu(private val index: Int): Menu() {
 
     private class CurrentKitButton : Button() {
         override fun getButtonItem(player: Player): ItemStack {
-            val profile = Profile.getByUUID(player.uniqueId)
+            val profile = PracticePlugin.instance.profileManager.findById(player.uniqueId)!!
             return ItemBuilder(Material.NAME_TAG)
-                .name("${CC.PRIMARY}Editing: ${CC.SECONDARY}${profile?.kitEditorData!!.kit!!.name}")
+                .name("${CC.PRIMARY}Editing: ${CC.SECONDARY}${profile.kitEditorData!!.kit!!.name}")
                 .build()
         }
     }
@@ -159,8 +171,8 @@ class KitEditorMenu(private val index: Int): Menu() {
 
         override fun clicked(player: Player, i: Int, clickType: ClickType?, hb: Int) {
             playNeutral(player)
-            val profile = Profile.getByUUID(player.uniqueId)
-            player.inventory.contents = profile?.kitEditorData!!.kit!!.content
+            val profile = PracticePlugin.instance.profileManager.findById(player.uniqueId)!!
+            player.inventory.contents = profile.kitEditorData!!.kit!!.content
             player.updateInventory()
         }
 
@@ -182,12 +194,12 @@ class KitEditorMenu(private val index: Int): Menu() {
         override fun clicked(player: Player, i: Int, clickType: ClickType?, hb: Int) {
             playNeutral(player)
             player.closeInventory()
-            val profile = Profile.getByUUID(player.uniqueId)
-            if (profile?.kitEditorData?.kit != null) {
+            val profile = PracticePlugin.instance.profileManager.findById(player.uniqueId)!!
+            if (profile.kitEditorData?.kit != null) {
                 profile.kitEditorData!!.selectedKit?.content = player.inventory.contents
             }
             //Hotbar.giveHotbarItems(player)
-            KitManagementMenu(profile?.kitEditorData?.kit!!).openMenu(player)
+            KitManagementMenu(profile.kitEditorData?.kit!!).openMenu(player)
         }
     }
 
@@ -207,8 +219,8 @@ class KitEditorMenu(private val index: Int): Menu() {
 
         override fun clicked(player: Player, slot: Int, clickType: ClickType?, hotbarButton: Int) {
             playNeutral(player)
-            val profile = Profile.getByUUID(player.uniqueId)
-            if (profile?.kitEditorData?.kit != null) {
+            val profile = PracticePlugin.instance.profileManager.findById(player.uniqueId)!!
+            if (profile.kitEditorData?.kit != null) {
                 val kitData = profile.getKitStatistic(profile.kitEditorData!!.kit!!.name)
                 kitData?.replaceKit(index, null)
                 KitManagementMenu(profile.kitEditorData?.kit!!).openMenu(player)
@@ -220,11 +232,23 @@ class KitEditorMenu(private val index: Int): Menu() {
 
     private class InfiniteItemButton(itemStack: ItemStack?) :
         DisplayButton(itemStack, false) {
-        override fun clicked(player: Player, slot: Int, clickType: ClickType?, hotbar: Int) {
+        override fun clicked(player: Player, slot: Int, clickType: ClickType, hotbar: Int) {
             val inventory: Inventory = player.openInventory.topInventory
             val itemStack: ItemStack = inventory.getItem(slot)
             inventory.setItem(slot, itemStack)
             player.itemOnCursor = itemStack
+            player.updateInventory()
+        }
+    }
+
+    inner class RefillableItemButton(itemStack: ItemStack?, cancel: Boolean = false) : DisplayButton(itemStack, cancel) {
+        override fun clicked(player: Player, slot: Int, clickType: ClickType, hotbarButton: Int) {
+            val inv = player.openInventory.topInventory
+            val item = inv.getItem(slot)
+
+            inv.setItem(slot, item)
+
+            player.itemOnCursor = item
             player.updateInventory()
         }
     }

@@ -4,7 +4,6 @@ import net.lyragames.practice.PracticePlugin
 import net.lyragames.practice.event.EventState
 import net.lyragames.practice.event.EventType
 import net.lyragames.practice.manager.EventManager
-import net.lyragames.practice.profile.Profile
 import net.lyragames.practice.profile.ProfileState
 import net.lyragames.practice.utils.CC
 import net.lyragames.practice.utils.TextBuilder
@@ -13,7 +12,16 @@ import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import org.bukkit.scheduler.BukkitRunnable
 
-object EventAnnounceTask: BukkitRunnable() {
+/*
+ * This project can't be redistributed without
+ * authorization of the developer
+ *
+ * Project @ lPractice
+ * @author yek4h © 2024
+ * Date: 05/06/2024
+ */
+
+object EventAnnounceTask : BukkitRunnable() {
 
     init {
         this.runTaskTimer(PracticePlugin.instance, 20 * 4L, 20 * 4L)
@@ -25,11 +33,10 @@ object EventAnnounceTask: BukkitRunnable() {
 
         if (event.players.isEmpty()) {
             Bukkit.broadcastMessage("${CC.RED}Stopped event as no one joined!")
-            event.players.stream().forEach {
-                Profile.getByUUID(it.uuid)?.state = ProfileState.LOBBY
+            event.players.forEach {
+                PracticePlugin.instance.profileManager.findById(it.uuid)?.state = ProfileState.LOBBY
             }
             event.players.clear()
-
             EventManager.event = null
             return
         }
@@ -41,11 +48,10 @@ object EventAnnounceTask: BukkitRunnable() {
 
         if (System.currentTimeMillis() - event.created >= (1000 * 60) * 5) {
             Bukkit.broadcastMessage("${CC.RED}Stopped event as no one joined!")
-            event.players.stream().forEach {
-                Profile.getByUUID(it.uuid)?.state = ProfileState.LOBBY
+            event.players.forEach {
+                PracticePlugin.instance.profileManager.findById(it.uuid)?.state = ProfileState.LOBBY
             }
             event.players.clear()
-
             EventManager.event = null
             return
         }
@@ -54,15 +60,12 @@ object EventAnnounceTask: BukkitRunnable() {
         val fancyMessage = buildMessage(host, event.type)
 
         for (player in Bukkit.getOnlinePlayers()) {
-         //   if (player.uniqueId == host.uniqueId) continue
-             if (event.getPlayer(player.uniqueId) != null) continue
-
+            if (event.getPlayer(player.uniqueId) != null) continue
             player.spigot().sendMessage(fancyMessage)
         }
     }
 
-    private fun buildMessage(host: Player, eventType: EventType) : TextComponent {
-
+    private fun buildMessage(host: Player, eventType: EventType): TextComponent {
         return TextBuilder()
             .setText("${CC.GREEN}${host.name}${CC.YELLOW} is hosting ${CC.GREEN}${eventType.eventName}${CC.YELLOW} event!")
             .then()

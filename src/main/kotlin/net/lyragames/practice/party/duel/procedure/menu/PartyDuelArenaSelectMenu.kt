@@ -1,7 +1,7 @@
 package net.lyragames.practice.party.duel.procedure.menu
 
-import me.zowpy.menu.buttons.Button
-import me.zowpy.menu.pagination.PaginatedMenu
+import rip.katz.api.menu.Button
+import rip.katz.api.menu.pagination.PaginatedMenu
 import net.lyragames.practice.arena.Arena
 import net.lyragames.practice.arena.type.ArenaType
 import net.lyragames.practice.duel.procedure.DuelProcedure
@@ -45,11 +45,10 @@ class PartyDuelArenaSelectMenu: PaginatedMenu() {
 
         for (arena in Arena.arenas) {
             if (!arena.isSetup || arena.duplicate) continue
-            if (kit?.kitData?.build!! && arena.arenaType != ArenaType.BUILD) continue
-            if (kit.kitData.sumo && arena.arenaType != ArenaType.SUMO) continue
-            if (kit.kitData.mlgRush && arena.arenaType != ArenaType.MLGRUSH) continue
-            if (kit.kitData.bedFights && arena.arenaType != ArenaType.BEDFIGHT) continue
-            if (arena.arenaType != ArenaType.NORMAL) continue
+            if (kit?.build!! && arena.arenaType != ArenaType.STANDALONE) continue
+            if (kit.mlgRush && arena.arenaType != ArenaType.STANDALONE) continue
+            if (kit.bedFights && arena.arenaType != ArenaType.STANDALONE) continue
+            if (arena.arenaType != ArenaType.SHARED) continue
 
             toReturn[toReturn.size] = object : Button() {
 

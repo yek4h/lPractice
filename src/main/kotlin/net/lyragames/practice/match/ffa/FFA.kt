@@ -4,7 +4,6 @@ import net.lyragames.practice.Locale
 import net.lyragames.practice.PracticePlugin
 import net.lyragames.practice.constants.Constants
 import net.lyragames.practice.kit.Kit
-import net.lyragames.practice.profile.Profile
 import net.lyragames.practice.profile.ProfileState
 import net.lyragames.practice.profile.hotbar.Hotbar
 import net.lyragames.practice.utils.CC
@@ -78,7 +77,7 @@ class FFA(val kit: Kit) {
 
     fun setup(ffaPlayer: FFAPlayer) {
         val player = ffaPlayer.player
-        val profile = Profile.getByUUID(player.uniqueId)
+        val profile = PracticePlugin.instance.profileManager.findById(player.uniqueId)!!
 
         if (Constants.FFA_SPAWN != null) {
             player.teleport(Constants.FFA_SPAWN)
@@ -100,7 +99,7 @@ class FFA(val kit: Kit) {
 
         if (!offline) {
             val player = ffaPlayer.player
-            val profile = Profile.getByUUID(ffaPlayer.uuid)
+            val profile = PracticePlugin.instance.profileManager.findById(ffaPlayer.uuid)
             val entityPlayer = (player as CraftPlayer).handle
 
             for (item in droppedItems) {
@@ -147,7 +146,7 @@ class FFA(val kit: Kit) {
         }, 1L)
     }
 
-    fun getFFAPlayer(uuid: UUID): FFAPlayer? {
+    fun getFFAPlayer(uuid: UUID): FFAPlayer {
         return players.first { it.uuid == uuid }
     }
 

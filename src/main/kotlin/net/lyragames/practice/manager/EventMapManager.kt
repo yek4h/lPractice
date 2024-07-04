@@ -17,13 +17,13 @@ object EventMapManager {
 
         if (configFile.getConfigurationSection("maps") == null) return
 
-        for (key in configFile.getConfigurationSection("maps").getKeys(false)) {
+        for (key in configFile.getConfigurationSection("maps")!!.getKeys(false)) {
             if (key == null) continue
 
             var eventMap = EventMap(key)
 
             val section = configFile.getConfigurationSection("maps.${key}")
-            eventMap.type = EventMapType.valueOf(section.getString("type").uppercase())
+            eventMap.type = EventMapType.valueOf(section!!.getString("type").uppercase())
 
             if (eventMap.type == EventMapType.TNT_RUN) {
                 eventMap = TNTRunMap(key)

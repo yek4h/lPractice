@@ -31,6 +31,9 @@ class MatchSnapshot(player: Player, dead: Boolean) {
     var potionsMissed = 0
     var longestCombo = 0
     var totalHits = 0
+    var wtapAttempts = 0
+    var effectiveWTaps = 0
+    var wtapAccuracy = 100.0
     var createdAt: Long = 0
 
     init {
@@ -66,6 +69,8 @@ class MatchSnapshot(player: Player, dead: Boolean) {
         }
         return (100.0 - potionsMissed.toDouble() / potionsThrown.toDouble() * 100.0).roundToInt().toDouble()
     }
+
+
 
     fun isExpired(): Boolean {
         return createdAt + 3_000 * 60 <= System.currentTimeMillis()

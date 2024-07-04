@@ -1,4 +1,4 @@
-package net.lyragames.practice.kit
+package dev.yair.practice.kit
 
 
 

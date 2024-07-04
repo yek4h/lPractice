@@ -1,7 +1,7 @@
 package net.lyragames.practice.arena.rating.menu
 
-import me.zowpy.menu.Menu
-import me.zowpy.menu.buttons.Button
+import rip.katz.api.menu.Menu
+import rip.katz.api.menu.Button
 import net.lyragames.practice.arena.Arena
 import net.lyragames.practice.manager.ArenaRatingManager
 import net.lyragames.practice.utils.CC

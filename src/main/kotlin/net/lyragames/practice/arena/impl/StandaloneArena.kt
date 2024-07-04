@@ -17,9 +17,12 @@ import com.sk89q.worldedit.world.World
 import com.sk89q.worldedit.world.registry.WorldData
 import net.lyragames.practice.PracticePlugin
 import net.lyragames.practice.arena.Arena
+import net.lyragames.practice.arena.type.ArenaType
+import net.lyragames.practice.kit.Kit
 import net.lyragames.practice.utils.Cuboid
 import net.lyragames.practice.utils.LocationUtil
 import org.bukkit.Location
+import org.bukkit.Material
 import java.util.concurrent.ThreadLocalRandom
 
 
@@ -34,104 +37,35 @@ import java.util.concurrent.ThreadLocalRandom
 
 open class StandaloneArena(name: String) : Arena(name) {
 
-    open val duplicates: MutableList<Arena> = mutableListOf()
+    fun findClosestBlock(referencePoint: Location?, material: Material): Cuboid? {
+        val world = referencePoint!!.world ?: return null
+        val cuboid = Cuboid(min!!, max!!)
+        val blocks = cuboid.blocks.filter { it.type == material }
 
-    override fun save() {
-        val configFile = PracticePlugin.instance.arenasFile
-        val configSection = configFile.createSection("arenas.$name")
+        val closestBlock = blocks.minByOrNull { it.location.distance(referencePoint) } ?: return null
 
-        configSection.set("l1", LocationUtil.serialize(l1))
-        configSection.set("l2", LocationUtil.serialize(l2))
-        configSection.set("min", LocationUtil.serialize(min))
-        configSection.set("max", LocationUtil.serialize(max))
-        configSection.set("deadzone", deadzone)
-        configSection.set("type", arenaType.name)
+        val blockLocation = closestBlock.location
+        val cuboidSize = 1 // Puedes ajustar el tamaño del Cuboid alrededor del bloque
 
-        if (duplicates.isNotEmpty()) {
-            var i = 1
-
-            for (arena in duplicates) {
-                val configSection1 = configSection.createSection("duplicates.$i")
-
-                configSection1.set("l1", LocationUtil.serialize(arena.l1))
-                configSection1.set("l2", LocationUtil.serialize(arena.l2))
-                configSection1.set("min", LocationUtil.serialize(arena.min))
-                configSection1.set("max", LocationUtil.serialize(arena.max))
-                configSection1.set("deadzone", arena.deadzone)
-
-                i++
-            }
-        }
-
-        configFile.save()
+        return Cuboid(
+            Location(world, blockLocation.x - cuboidSize, blockLocation.y - cuboidSize, blockLocation.z - cuboidSize),
+            Location(world, blockLocation.x + cuboidSize, blockLocation.y + cuboidSize, blockLocation.z + cuboidSize)
+        )
     }
 
-    override fun duplicate(world: org.bukkit.World, times: Int) {
-        for (i in 0 until times) {
-            val random: Double = ThreadLocalRandom.current().nextDouble(10.0) + 1
-            val offsetMultiplier: Double = ThreadLocalRandom.current().nextDouble(10000.0) + 1
-            
-            val offsetX: Double = random * offsetMultiplier / 10
-            val offsetZ: Double = random * offsetMultiplier / 10
-            
-            val minX: Double = min!!.x + offsetX
-            val minZ: Double = min!!.z + offsetZ
-            val maxX: Double = max!!.x + offsetX
-            val maxZ: Double = max!!.z + offsetZ
-            
-            val aX: Double = l1!!.x + offsetX
-            val aZ: Double = l1!!.z + offsetZ
-            val bX: Double = l2!!.x + offsetX
-            val bZ: Double = l2!!.z + offsetZ
-            
-            val min = Location(world, minX, min!!.y, minZ)
-            val max = Location(world, maxX, max!!.y, maxZ)
-            
-            val a = Location(world, aX, l1!!.y, aZ, l1!!.yaw, l1!!.pitch)
-            val b = Location(world, bX, l2!!.y, bZ, l2!!.yaw, l2!!.pitch)
-            
-            val arena = Arena(name + i)
-            arena.bounds = Cuboid(min, max)
-            arena.l1 = a
-            arena.l2 = b
-            arena.min = min
-            arena.max = max
-            arena.duplicate = true
-            arena.deadzone = deadzone
-            duplicates.add(arena)
+    fun findClosestBlockByLocation(referencePoint: Location?, material: Material): Location? {
+        val world = referencePoint!!.world ?: return null
+        val cuboid = Cuboid(min!!, max!!)
+        val blocks = cuboid.blocks.filter { it.type == material }
 
-            val weWorld: World = BukkitWorld(world)
-            val worldData: WorldData = weWorld.worldData
-            val to = Vector(minX, bounds.lowerY.toDouble(), minZ)
-            val clipboard: Clipboard = BlockArrayClipboard(
-                CuboidRegion(
-                    Vector(min.x, min.y, min.z),
-                    Vector(max.x, max.y, max.z)
-                )
-            )
-            val destination: Extent = WorldEdit.getInstance().editSessionFactory.getEditSession(weWorld, -1)
-            val copy = ForwardExtentCopy(clipboard, clipboard.region, clipboard.origin, destination, to)
-            copy.sourceMask = ExistingBlockMask(clipboard)
-            val operation: Operation = ClipboardHolder(clipboard, worldData)
-                .createPaste(destination, worldData)
-                .ignoreAirBlocks(false)
-                .to(to)
-                .build()
-            try {
-                Operations.complete(operation)
-            } catch (e: WorldEditException) {
-                e.printStackTrace()
-            }
-        }
-
-        save()
+        return blocks.minByOrNull { it.location.distance(referencePoint) }?.location
     }
 
     override fun isFree(): Boolean {
-        return free || duplicates.stream().anyMatch { it.free && it.isSetup }
+        return super.isFree() || duplicates.any { it.free && it.isSetup }
     }
 
     fun getFreeDuplicate(): Arena? {
-        return duplicates.stream().filter { it.free && it.isSetup }.findAny().orElse(null)
+        return duplicates.firstOrNull { it.free && it.isSetup }
     }
 }

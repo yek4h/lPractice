@@ -5,7 +5,7 @@ import net.lyragames.practice.event.EventType
 import net.lyragames.practice.event.impl.BracketsEvent
 import net.lyragames.practice.event.player.EventPlayerState
 import net.lyragames.practice.manager.EventManager
-import net.lyragames.practice.profile.Profile
+import net.lyragames.practice.PracticePlugin
 import net.lyragames.practice.profile.ProfileState
 import net.lyragames.practice.utils.CC
 import org.bukkit.Material
@@ -26,9 +26,9 @@ object EventListener : Listener {
     @EventHandler
     fun onPlace(event: BlockPlaceEvent) {
         val player = event.player
-        val profile = Profile.getByUUID(player.uniqueId)
+        val profile = PracticePlugin.instance.profileManager.findById(player.uniqueId)!!
 
-        if (profile?.state == ProfileState.EVENT) {
+        if (profile.state == ProfileState.EVENT) {
             val currentEvent = EventManager.event
             val eventPlayer = currentEvent?.getPlayer(player.uniqueId)
 
@@ -36,15 +36,15 @@ object EventListener : Listener {
                 if (currentEvent.type == EventType.BRACKETS) {
                     val bracketEvent = currentEvent as BracketsEvent
 
-                    if (bracketEvent.kit.kitData.build && bracketEvent.state == EventState.FIGHTING) {
+                    if (bracketEvent.kit.build && bracketEvent.state == EventState.FIGHTING) {
                         bracketEvent.blocksPlaced.add(event.blockPlaced)
-                    }else {
+                    } else {
                         event.isCancelled = true
                     }
-                }else {
+                } else {
                     event.isCancelled = true
                 }
-            }else {
+            } else {
                 event.isCancelled = true
             }
         }
@@ -53,9 +53,9 @@ object EventListener : Listener {
     @EventHandler
     fun onBreak(event: BlockBreakEvent) {
         val player = event.player
-        val profile = Profile.getByUUID(player.uniqueId)
+        val profile = PracticePlugin.instance.profileManager.findById(player.uniqueId)!!
 
-        if (profile?.state == ProfileState.EVENT) {
+        if (profile.state == ProfileState.EVENT) {
             val currentEvent = EventManager.event
             val eventPlayer = currentEvent?.getPlayer(player.uniqueId)
 
@@ -63,7 +63,7 @@ object EventListener : Listener {
                 if (currentEvent.type == EventType.BRACKETS) {
                     val bracketEvent = currentEvent as BracketsEvent
 
-                    if (bracketEvent.kit.kitData.build && bracketEvent.state == EventState.FIGHTING && bracketEvent.blocksPlaced.contains(event.block)) {
+                    if (bracketEvent.kit.build && bracketEvent.state == EventState.FIGHTING && bracketEvent.blocksPlaced.contains(event.block)) {
                         bracketEvent.blocksPlaced.remove(event.block)
                     }else {
                         event.isCancelled = true
@@ -80,9 +80,9 @@ object EventListener : Listener {
     @EventHandler
     fun onLiquidPlace(event: PlayerBucketEmptyEvent) {
         val player = event.player
-        val profile = Profile.getByUUID(player.uniqueId)
+        val profile = PracticePlugin.instance.profileManager.findById(player.uniqueId)!!
 
-        if (profile?.state == ProfileState.EVENT) {
+        if (profile.state == ProfileState.EVENT) {
             val currentEvent = EventManager.event
             val eventPlayer = currentEvent?.getPlayer(player.uniqueId)
 
@@ -90,15 +90,15 @@ object EventListener : Listener {
                 if (currentEvent.type == EventType.BRACKETS) {
                     val bracketEvent = currentEvent as BracketsEvent
 
-                    if (bracketEvent.kit.kitData.build && bracketEvent.state == EventState.FIGHTING) {
+                    if (bracketEvent.kit.build && bracketEvent.state == EventState.FIGHTING) {
                         bracketEvent.blocksPlaced.add(event.blockClicked)
-                    }else {
+                    } else {
                         event.isCancelled = true
                     }
-                }else {
+                } else {
                     event.isCancelled = true
                 }
-            }else {
+            } else {
                 event.isCancelled = true
             }
 
@@ -109,9 +109,9 @@ object EventListener : Listener {
     @EventHandler
     fun onLiquidFill(event: PlayerBucketFillEvent) {
         val player = event.player
-        val profile = Profile.getByUUID(player.uniqueId)
+        val profile = PracticePlugin.instance.profileManager.findById(player.uniqueId)!!
 
-        if (profile?.state == ProfileState.EVENT) {
+        if (profile.state == ProfileState.EVENT) {
             val currentEvent = EventManager.event
             val eventPlayer = currentEvent?.getPlayer(player.uniqueId)
 
@@ -119,7 +119,7 @@ object EventListener : Listener {
                 if (currentEvent.type == EventType.BRACKETS) {
                     val bracketEvent = currentEvent as BracketsEvent
 
-                    if (bracketEvent.kit.kitData.build && bracketEvent.state == EventState.FIGHTING && bracketEvent.blocksPlaced.contains(event.blockClicked)) {
+                    if (bracketEvent.kit.build && bracketEvent.state == EventState.FIGHTING && bracketEvent.blocksPlaced.contains(event.blockClicked)) {
                         bracketEvent.blocksPlaced.remove(event.blockClicked)
                     }else {
                         event.isCancelled = true
@@ -135,12 +135,12 @@ object EventListener : Listener {
         }
     }
 
-    @EventHandler
+    /*@EventHandler
     fun onDrop(event: PlayerDropItemEvent) {
         val player = event.player
-        val profile = Profile.getByUUID(player.uniqueId)
+        val profile = PracticePlugin.instance.profileManager.findById(player.uniqueId)!!
 
-        if (profile?.state == ProfileState.EVENT) {
+        if (profile.state == ProfileState.EVENT) {
             val currentEvent = EventManager.event
             val eventPlayer = currentEvent?.getPlayer(player.uniqueId)
 
@@ -161,9 +161,9 @@ object EventListener : Listener {
     @EventHandler
     fun onPickup(event: PlayerPickupItemEvent) {
         val player = event.player
-        val profile = Profile.getByUUID(player.uniqueId)
+        val profile = PracticePlugin.instance.profileManager.findById(player.uniqueId)!!
 
-        if (profile?.state == ProfileState.EVENT) {
+        if (profile.state == ProfileState.EVENT) {
             val currentEvent = EventManager.event
             val eventPlayer = currentEvent?.getPlayer(player.uniqueId)
 
@@ -179,7 +179,7 @@ object EventListener : Listener {
                 event.isCancelled = true
             }
         }
-    }
+    }*/
 
     @EventHandler
     fun onHit(event: EntityDamageByEntityEvent) {
@@ -188,10 +188,10 @@ object EventListener : Listener {
             val player = event.entity as Player
             val damager = event.damager as Player
 
-            val profile = Profile.getByUUID(player.uniqueId)
-            val profile1 = Profile.getByUUID(damager.uniqueId)
+            val profile = PracticePlugin.instance.profileManager.findById(player.uniqueId)!!
+            val profile1 = PracticePlugin.instance.profileManager.findById(damager.uniqueId)!!
 
-            if (profile?.state == ProfileState.EVENT && profile1?.state == ProfileState.EVENT) {
+            if (profile.state == ProfileState.EVENT && profile1.state == ProfileState.EVENT) {
 
                 val currentEvent = EventManager.event
 
@@ -258,9 +258,9 @@ object EventListener : Listener {
         if (event.clickedInventory == null) return
         if (event.clickedInventory.type != InventoryType.PLAYER) return
 
-        val profile = Profile.getByUUID(event.whoClicked.uniqueId)
+        val profile = PracticePlugin.instance.profileManager.findById(event.whoClicked.uniqueId)!!
 
-        if (profile!!.state == ProfileState.EVENT) {
+        if (profile.state == ProfileState.EVENT) {
             if (EventManager.event!!.type == EventType.TNT_TAG) {
                 event.isCancelled = true
             }
@@ -270,9 +270,9 @@ object EventListener : Listener {
     @EventHandler
     fun onDeath(event: PlayerDeathEvent) {
         val player = event.entity as Player
-        val profile = Profile.getByUUID(player.uniqueId)
+        val profile = PracticePlugin.instance.profileManager.findById(player.uniqueId)!!
 
-        if (profile!!.state != ProfileState.EVENT) return
+        if (profile.state != ProfileState.EVENT) return
 
         val currentEvent = EventManager.event ?: return
 
@@ -286,9 +286,9 @@ object EventListener : Listener {
 
     @EventHandler
     fun onHunger(event: FoodLevelChangeEvent) {
-        val profile = Profile.getByUUID(event.entity.uniqueId)
+        val profile = PracticePlugin.instance.profileManager.findById(event.entity.uniqueId)!!
 
-        if (profile?.state == ProfileState.EVENT && EventManager.event != null) {
+        if (profile.state == ProfileState.EVENT && EventManager.event != null) {
             val currentEvent = EventManager.event
 
             if (currentEvent?.type != EventType.BRACKETS) {
@@ -296,7 +296,7 @@ object EventListener : Listener {
                 return
             }
 
-            if (!(currentEvent as BracketsEvent).kit.kitData.hunger) {
+            if (!(currentEvent as BracketsEvent).kit.hunger) {
                 event.isCancelled = true
             }
         }
@@ -305,9 +305,9 @@ object EventListener : Listener {
     @EventHandler
     fun onDamage(event: EntityDamageEvent) {
         if (event.entity is Player) {
-            val profile = Profile.getByUUID((event.entity as Player).player.uniqueId)
+            val profile = PracticePlugin.instance.profileManager.findById((event.entity as Player).player.uniqueId)!!
 
-            if (profile!!.state == ProfileState.EVENT) {
+            if (profile.state == ProfileState.EVENT) {
                 val currentEvent = EventManager.event
 
                 if (currentEvent!!.state != EventState.FIGHTING) {
@@ -327,7 +327,7 @@ object EventListener : Listener {
                 if (currentEvent.type == EventType.BRACKETS) {
                     val bracketEvent = currentEvent as BracketsEvent
 
-                    if (bracketEvent.kit.kitData.fallDamage && event.cause == EntityDamageEvent.DamageCause.FALL) {
+                    if (bracketEvent.kit.fallDamage && event.cause == EntityDamageEvent.DamageCause.FALL) {
                         event.isCancelled = true
                     }
 
@@ -342,9 +342,9 @@ object EventListener : Listener {
     @EventHandler
     fun onRegen(event: EntityRegainHealthEvent) {
         if (event.entity is Player) {
-            val profile = Profile.getByUUID((event.entity as Player).player.uniqueId)
+            val profile = PracticePlugin.instance.profileManager.findById((event.entity as Player).player.uniqueId)!!
 
-            if (profile!!.state == ProfileState.EVENT) {
+            if (profile.state == ProfileState.EVENT) {
                 val currentEvent = EventManager.event
 
                 if (currentEvent!!.state != EventState.FIGHTING) {
@@ -355,7 +355,7 @@ object EventListener : Listener {
 
                     val kit = (currentEvent as BracketsEvent).kit
 
-                    event.isCancelled = !(kit.kitData.regeneration && event.regainReason == EntityRegainHealthEvent.RegainReason.REGEN)
+                    event.isCancelled = !(kit.regeneration && event.regainReason == EntityRegainHealthEvent.RegainReason.REGEN)
                 }
             }
         }
@@ -364,9 +364,9 @@ object EventListener : Listener {
     @EventHandler
     fun onPotionSplash(event: PotionSplashEvent) {
         if (event.potion.shooter is Player) {
-            val shooterData = Profile.getByUUID((event.potion.shooter as Player).uniqueId)
+            val shooterData = PracticePlugin.instance.profileManager.findById((event.potion.shooter as Player).uniqueId)!!
 
-            if (shooterData?.state == ProfileState.EVENT) {
+            if (shooterData.state == ProfileState.EVENT) {
                 val currentEvent = EventManager.event
                 val eventPlayer = currentEvent?.getPlayer(shooterData.uuid)
 
@@ -380,9 +380,9 @@ object EventListener : Listener {
     @EventHandler(priority = EventPriority.LOW)
     fun onQuit(event: PlayerQuitEvent) {
         val player = event.player
-        val profile = Profile.getByUUID(player.uniqueId)
+        val profile = PracticePlugin.instance.profileManager.findById(player.uniqueId)!!
 
-        if (profile?.state == ProfileState.EVENT) {
+        if (profile.state == ProfileState.EVENT) {
 
             val currentEvent = EventManager.event ?: return
             val eventPlayer = currentEvent.getPlayer(player.uniqueId)

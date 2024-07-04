@@ -2,9 +2,11 @@ package net.lyragames.practice.arena
 
 import net.lyragames.practice.PracticePlugin
 import net.lyragames.practice.arena.type.ArenaType
+import net.lyragames.practice.kit.Kit
 import net.lyragames.practice.utils.Cuboid
 import net.lyragames.practice.utils.LocationUtil
 import org.bukkit.Location
+import org.bukkit.configuration.ConfigurationSection
 
 /**
  * This Project is property of Zowpy © 2021
@@ -20,22 +22,19 @@ open class Arena(val name: String) {
     var l2: Location? = null
     var min: Location? = null
     var max: Location? = null
-
-    open var arenaType = ArenaType.NORMAL
-
+    open var arenaType = ArenaType.SHARED
     var deadzone = 0
     var free = true
-
     var duplicate = false
-
     lateinit var bounds: Cuboid
+    val duplicates: MutableList<Arena> = mutableListOf()
 
     open val isSetup: Boolean
         get() = l1 != null && l2 != null && min != null && max != null
 
     open fun save() {
         val configFile = PracticePlugin.instance.arenasFile
-        val configSection = configFile.getConfigurationSection("arenas.$name")
+        val configSection = configFile.createSection("arenas.$name")
 
         configSection.set("l1", LocationUtil.serialize(l1))
         configSection.set("l2", LocationUtil.serialize(l2))
@@ -44,22 +43,41 @@ open class Arena(val name: String) {
         configSection.set("deadzone", deadzone)
         configSection.set("type", arenaType.name)
 
+        if (duplicates.isNotEmpty()) {
+            duplicates.forEachIndexed { index, duplicateArena ->
+                val duplicateSection = configSection.createSection("duplicates.${index + 1}")
+                duplicateSection.set("l1", LocationUtil.serialize(duplicateArena.l1))
+                duplicateSection.set("l2", LocationUtil.serialize(duplicateArena.l2))
+                duplicateSection.set("min", LocationUtil.serialize(duplicateArena.min))
+                duplicateSection.set("max", LocationUtil.serialize(duplicateArena.max))
+                duplicateSection.set("deadzone", duplicateArena.deadzone)
+            }
+        }
+
         configFile.save()
     }
 
     open fun delete() {
         val configFile = PracticePlugin.instance.arenasFile
-
         configFile.config.set("arenas.$name", null)
-
         configFile.save()
     }
 
-    open fun isFree(): Boolean {
-        return free
-    }
+    open fun isFree(): Boolean = free
 
-    open fun duplicate(world: org.bukkit.World, times: Int) {}
+    open fun isCompatible(kit: Kit): Boolean = true
+
+    fun createDuplicate(name: String, section: ConfigurationSection?): Arena {
+        return Arena(name).apply {
+            l1 = LocationUtil.deserialize(section!!.getString("l1"))
+            l2 = LocationUtil.deserialize(section.getString("l2"))
+            min = LocationUtil.deserialize(section.getString("min"))
+            max = LocationUtil.deserialize(section.getString("max"))
+            bounds = Cuboid(min!!, max!!)
+            deadzone = section.getInt("deadzone")
+            duplicate = true
+        }
+    }
 
     companion object {
         @JvmStatic
@@ -67,8 +85,7 @@ open class Arena(val name: String) {
 
         @JvmStatic
         fun getByName(name: String): Arena? {
-            return arenas.stream().filter { arena -> arena.name.equals(name, true) }
-                .findFirst().orElse(null)
+            return arenas.firstOrNull { it.name.equals(name, true) }
         }
     }
 }

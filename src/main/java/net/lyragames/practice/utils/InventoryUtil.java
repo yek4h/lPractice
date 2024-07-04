@@ -48,7 +48,10 @@ public class InventoryUtil {
 
         return items.toArray(new ItemStack[items.size()]);
     }
-
+    public static ItemStack[] deserialize(Object string) {
+        return ((List<ItemStack>) string).toArray(
+                new ItemStack[0]);
+    }
     public static String serializeItemStack(ItemStack item) {
         StringBuilder builder = new StringBuilder();
 

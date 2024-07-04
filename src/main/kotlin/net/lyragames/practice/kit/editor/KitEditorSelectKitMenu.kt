@@ -1,9 +1,9 @@
 package net.lyragames.practice.kit.editor
 
-import me.zowpy.menu.Menu
-import me.zowpy.menu.buttons.Button
+import net.lyragames.practice.PracticePlugin
+import rip.katz.api.menu.Menu
+import rip.katz.api.menu.Button
 import net.lyragames.practice.kit.Kit
-import net.lyragames.practice.profile.Profile
 import net.lyragames.practice.utils.CC
 import net.lyragames.practice.utils.ItemBuilder
 import org.bukkit.entity.Player
@@ -28,8 +28,8 @@ class KitEditorSelectKitMenu: Menu() {
 
     override fun getButtons(player: Player?): Map<Int, Button> {
         val buttons: MutableMap<Int, Button> = mutableMapOf()
-        Kit.kits.forEach { kit ->
-            if (kit.kitData.enabled) {
+        PracticePlugin.instance.kitManager.kits.values.forEach { kit ->
+            if (kit.enabled) {
                 buttons[buttons.size] = KitDisplayButton(kit)
            }
         }
@@ -40,14 +40,15 @@ class KitEditorSelectKitMenu: Menu() {
 
         override fun getButtonItem(player: Player?): ItemStack {
             return ItemBuilder(kit.displayItem)
+                .clearLore()
                 .name("${CC.PRIMARY}${kit.name}")
                 .build()
         }
 
         override fun clicked(player: Player, slot: Int, clickType: ClickType?, hotbarButton: Int) {
             player.closeInventory()
-            val profile = Profile.getByUUID(player.uniqueId)
-            profile?.kitEditorData?.kit = kit
+            val profile = PracticePlugin.instance.profileManager.findById(player.uniqueId)!!
+            profile.kitEditorData?.kit = kit
             KitManagementMenu(kit).openMenu(player)
         }
     }

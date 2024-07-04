@@ -1,6 +1,6 @@
-cant-do-this: "&cYou can't do this right now!"
-click-to-join: " &a[Click to join]"
-click-to-accept: " &a[Click to accept]"
+CANT-DO-THIS: "&cYou can't do this right now!"
+CLICK-TO-JOIN: " &a[Click to join]"
+CLICK-TO-ACCEPT: " &a[Click to accept]"
 
 duel:
   duel-request: "&e<sender>&e (<ping> ms)&a has sent you a duel request with kit &e<kit>&a on"

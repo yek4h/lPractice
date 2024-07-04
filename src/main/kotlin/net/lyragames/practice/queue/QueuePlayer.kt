@@ -1,53 +1,39 @@
 package net.lyragames.practice.queue
 
 import net.lyragames.practice.Locale
-import net.lyragames.practice.utils.CC
 import org.bukkit.Bukkit
 import java.util.*
 
+class QueuePlayer(val uuid: UUID, val name: String, val queue: Queue, val pingFactor: Int, var elo: Int = 0) {
 
-/**
- * This Project is property of Zowpy © 2022
- * Redistribution of this Project is not allowed
- *
- * @author Zowpy
- * Created: 2/16/2022
- * Project: lPractice
- */
-
-class QueuePlayer(var uuid: UUID, var name: String, val queue: Queue, val pingFactor: Int) {
-
-    var elo = 0
-    val started = System.currentTimeMillis()
-
-    private var range = 25
-    private var ticked = 0
+    val started: Long = System.currentTimeMillis()
+    private var range: Int = 25
+    private var ticked: Int = 0
 
     fun tickRange() {
         ticked++
-        if (ticked % 6 == 0) {
-            range += 3
+        if (ticked % 3 == 0) {
+            range += 5
             if (ticked >= 50) {
                 ticked = 0
-                if (queue.ranked) {
-                    Bukkit.getPlayer(uuid)?.sendMessage(Locale.ELO_SEARCH.getMessage().replace("<min>", "${getMinRange()}").replace("<max>", "${getMaxRange()}"))
+                if (queue.type == QueueType.RANKED) {
+                    Bukkit.getPlayer(uuid)?.sendMessage(Locale.ELO_SEARCH.getMessage()
+                        .replace("<min>", "${getMinRange()}")
+                        .replace("<max>", "${getMaxRange()}"))
                 }
             }
         }
     }
 
     fun isInRange(elo: Int): Boolean {
-        return elo >= this.elo - range && elo <= this.elo + range
+        return elo in (this.elo - range)..(this.elo + range)
     }
 
-
     fun getMinRange(): Int {
-        val min = elo - range
-        return Math.max(min, 0)
+        return (elo - range).coerceAtLeast(0)
     }
 
     fun getMaxRange(): Int {
-        val max = elo + range
-        return Math.min(max, 2500)
+        return (elo + range).coerceAtMost(2500)
     }
 }

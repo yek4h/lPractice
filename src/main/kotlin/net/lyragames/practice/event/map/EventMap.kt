@@ -23,6 +23,14 @@ open class EventMap(val name: String) {
 
     open var type = EventMapType.SUMO
 
+    companion object {
+        val maps: MutableList<EventMap> = mutableListOf()
+
+        fun getByName(name: String): EventMap? {
+            return maps.firstOrNull { it.name.equals(name, ignoreCase = true) }
+        }
+    }
+
     open fun save() {
         val configFile = PracticePlugin.instance.eventsFile
         val section = configFile.createSection("maps.${name}")

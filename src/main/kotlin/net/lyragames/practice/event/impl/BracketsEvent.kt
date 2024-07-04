@@ -7,7 +7,7 @@ import net.lyragames.practice.event.player.EventPlayer
 import net.lyragames.practice.event.player.EventPlayerState
 import net.lyragames.practice.kit.Kit
 import net.lyragames.practice.manager.EventManager
-import net.lyragames.practice.profile.Profile
+import net.lyragames.practice.PracticePlugin
 import net.lyragames.practice.profile.hotbar.Hotbar
 import net.lyragames.practice.utils.CC
 import net.lyragames.practice.utils.PlayerUtil
@@ -40,15 +40,15 @@ class BracketsEvent(host: UUID, eventMap: EventMap, val kit: Kit) : Event(host, 
             eventPlayer.roundsPlayed++
             eventPlayer.state = EventPlayerState.FIGHTING
 
-            val profile = Profile.getByUUID(eventPlayer.uuid)
+            val profile = PracticePlugin.instance.profileManager.findById(eventPlayer.uuid)!!
 
             PlayerUtil.reset(eventPlayer.player)
 
-            profile?.getKitStatistic(kit.name)?.generateBooks(eventPlayer.player)
+            profile.getKitStatistic(kit.name)?.generateBooks(eventPlayer.player)
 
             if (i == 0) {
                 eventPlayer.player.teleport(eventMap.l1)
-            }else {
+            } else {
                 eventPlayer.player.teleport(eventMap.l2)
             }
 
@@ -83,7 +83,7 @@ class BracketsEvent(host: UUID, eventMap: EventMap, val kit: Kit) : Event(host, 
             eventPlayer.state = EventPlayerState.LOBBY
 
             eventPlayer.player.teleport(eventMap.spawn)
-            Hotbar.giveHotbar(Profile.getByUUID(eventPlayer.uuid)!!)
+            Hotbar.giveHotbar(PracticePlugin.instance.profileManager.findById(eventPlayer.uuid)!!)
             PlayerUtil.reset(eventPlayer.player)
         }
 

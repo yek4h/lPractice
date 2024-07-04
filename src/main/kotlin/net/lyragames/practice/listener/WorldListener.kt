@@ -3,7 +3,6 @@ package net.lyragames.practice.listener
 import net.lyragames.practice.PracticePlugin
 import net.lyragames.practice.match.Match
 import net.lyragames.practice.match.MatchState
-import net.lyragames.practice.profile.Profile
 import org.bukkit.Bukkit
 import org.bukkit.entity.Fireball
 import org.bukkit.entity.ItemFrame
@@ -60,7 +59,7 @@ object WorldListener : Listener {
                 return
             }
 
-            if (!match.kit.kitData.fireballFight && !match.kit.kitData.bedFights) {
+            if (!match.kit.fireballFight && !match.kit.bedFights) {
                 event.blockList().clear()
                 return
             }
@@ -114,7 +113,7 @@ object WorldListener : Listener {
     @EventHandler
     fun frame(event: EntityDamageByEntityEvent) {
         if (event.entity is ItemFrame) {
-            val profile = Profile.getByUUID((event.damager as Player).uniqueId)
+            val profile = PracticePlugin.instance.profileManager.findById((event.damager as Player).uniqueId)
 
             if (!profile!!.canBuild) {
                 event.isCancelled = true
@@ -125,7 +124,7 @@ object WorldListener : Listener {
     @EventHandler
     fun frame(event: PlayerInteractEntityEvent) {
         if (event.rightClicked is ItemFrame) {
-            val profile = Profile.getByUUID(event.player.uniqueId)
+            val profile = PracticePlugin.instance.profileManager.findById(event.player.uniqueId)
 
             if (!profile!!.canBuild) {
                 event.isCancelled = true
@@ -135,7 +134,7 @@ object WorldListener : Listener {
 
     /*@EventHandler
     fun interact(event: PlayerInteractEvent) {
-        val profile = Profile.getByUUID(event.player.uniqueId)
+        val profile = PracticePlugin.instance.profileManager.findById(event.player.uniqueId)
 
         event.isCancelled = !(profile?.canBuild!! && profile.match == null)
     } */

@@ -1,20 +1,23 @@
 package net.lyragames.practice.profile.hotbar
 
 import com.cryptomorin.xseries.XMaterial
+import net.lyragames.practice.Locale
 import net.lyragames.practice.event.EventState
 import net.lyragames.practice.kit.editor.KitEditorSelectKitMenu
-import net.lyragames.practice.manager.EventManager
-import net.lyragames.practice.manager.PartyManager
-import net.lyragames.practice.manager.QueueManager
+import net.lyragames.practice.manager.*
 import net.lyragames.practice.match.Match
-import net.lyragames.practice.match.ffa.menu.FFAChoosingMenu
+import net.lyragames.practice.party.Party
 import net.lyragames.practice.party.duel.procedure.PartyDuelProcedure
 import net.lyragames.practice.party.duel.procedure.menu.PartyDuelSelectPartyMenu
-import net.lyragames.practice.party.menu.PartyInformationMenu
-import net.lyragames.practice.party.menu.event.PartyStartEventMenu
+import net.lyragames.practice.PracticePlugin
 import net.lyragames.practice.profile.Profile
 import net.lyragames.practice.profile.ProfileState
-import net.lyragames.practice.queue.menu.QueueMenu
+import net.lyragames.practice.ui.ffa.FFAChoosingMenu
+import net.lyragames.practice.ui.leaderboards.LeaderboardRankedMenu
+import net.lyragames.practice.ui.party.PartyInformationMenu
+import net.lyragames.practice.ui.party.event.PartyStartEventMenu
+import net.lyragames.practice.ui.queue.ranked.RankedQueueMenu
+import net.lyragames.practice.ui.queue.unranked.UnrankedQueueMenu
 import net.lyragames.practice.utils.CC
 import net.lyragames.practice.utils.ItemBuilder
 import net.lyragames.practice.utils.item.CustomItemStack
@@ -26,160 +29,169 @@ import org.bukkit.inventory.ItemFlag
 import org.bukkit.inventory.ItemStack
 import java.util.function.Consumer
 
-
-/**
- * This Project is property of Zowpy © 2022
- * Redistribution of this Project is not allowed
- *
- * @author Zowpy
- * Created: 2/21/2022
- * Project: lPractice
- */
-
 object Hotbar {
 
     fun giveHotbar(profile: Profile) {
-        val player = Bukkit.getPlayer(profile.uuid)
+        val player = Bukkit.getPlayer(profile.uuid) ?: return
         player.inventory.clear()
 
-        if (profile.state == ProfileState.LOBBY) {
+        when (profile.state) {
+            ProfileState.LOBBY -> setupLobbyHotbar(player, profile)
+            ProfileState.QUEUE -> setupQueueHotbar(player, profile)
+            ProfileState.EVENT -> setupEventHotbar(player, profile)
+            ProfileState.SPECTATING -> setupSpectatingHotbar(player, profile)
+            else -> {}
+        }
+    }
 
-            if (profile.party != null) {
+    private fun setupLobbyHotbar(player: Player, profile: Profile) {
+        val items = mutableListOf<HotbarItem>()
 
-                player.inventory.setItem(0, createCustomItem(
-                    player,
-                    ItemBuilder(Material.NETHER_STAR).name("&eParty Information").build()
-                ) { PartyManager.getByUUID(profile.party!!)?.let { it1 -> PartyInformationMenu(it1).openMenu(player) } }.itemStack)
+        if (profile.party != null) {
+            items.addAll(getPartyHotbarItems(profile))
+        } else {
+            items.addAll(getLobbyHotbarItems(profile))
+        }
 
-                player.inventory.setItem(4, createCustomItem(
-                    player,
-                    ItemBuilder(Material.GOLD_AXE).name("&eStart Party Event").addFlags(ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_UNBREAKABLE).setUnbreakable(true).build()
-                ) { PartyStartEventMenu().openMenu(player) }.itemStack)
+        setHotbarItems(player, items)
+    }
 
-                player.inventory.setItem(5, createCustomItem(
-                    player,
-                    ItemBuilder(Material.DIAMOND_AXE).name("&eParty Duel").addFlags(ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_UNBREAKABLE).setUnbreakable(true).build()
-                ) {
-                    val duelProcedure = PartyDuelProcedure(player.uniqueId)
-                    PartyDuelProcedure.duelProcedures.add(duelProcedure)
-
-                    PartyDuelSelectPartyMenu().openMenu(player)
-                }.itemStack)
-
-                player.inventory.setItem(8, createCustomItem(
-                    player,
-                    ItemBuilder(XMaterial.RED_DYE.parseItem()).name("&cLeave Party").build(), true
-                ) { player.chat("/party leave") }.itemStack
-                )
-
-                return
-            }
-
-            player.inventory.setItem(0, createCustomItem(
-                player,
-                ItemBuilder(Material.IRON_SWORD).name("&eUnranked").addFlags(ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_UNBREAKABLE).setUnbreakable(true).build()
-            ) { QueueMenu(false).openMenu(player) }.itemStack)
-
-            player.inventory.setItem(1, createCustomItem(
-                player,
-                ItemBuilder(Material.DIAMOND_SWORD).name("&eRanked").addFlags(ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_UNBREAKABLE).setUnbreakable(true).build()
-            ) { QueueMenu(true).openMenu(player) }.itemStack)
-
-            player.inventory.setItem(2, createCustomItem(
-                player,
-                ItemBuilder(Material.GOLD_SWORD).name("&eFFA").addFlags(ItemFlag.HIDE_UNBREAKABLE, ItemFlag.HIDE_ATTRIBUTES).setUnbreakable(true).build(),
-            ) { FFAChoosingMenu().openMenu(player) }.itemStack)
-
-            player.inventory.setItem(4, createCustomItem(
-                player,
-                ItemBuilder(Material.NETHER_STAR).name("&eCreate Party").build(), true
-            ) { player.chat("/party create") }.itemStack)
-
-            player.inventory.setItem(7, createCustomItem(
-                player,
-                ItemBuilder(Material.EYE_OF_ENDER).name("&eHost Events").build()
-            ) { it.isCancelled = true
-                player.chat("/event host")
-            }.itemStack)
-
-            player.inventory.setItem(8, createCustomItem(
-                player,
-                ItemBuilder(Material.BOOK).name("&eEdit Kit").addFlags(ItemFlag.HIDE_ATTRIBUTES).build()
-            ) { KitEditorSelectKitMenu().openMenu(player) }.itemStack)
-        }else if (profile.state == ProfileState.QUEUE) {
-
-            player.inventory.setItem(8, createCustomItem(
-                player,
-                ItemBuilder(XMaterial.RED_DYE.parseItem()).name("&cLeave Queue").build(), true
-            ) {
+    private fun setupQueueHotbar(player: Player, profile: Profile) {
+        setHotbarItems(player, listOf(
+            HotbarItem(8, XMaterial.RED_DYE.parseMaterial()!!, "&cLeave Queue") {
                 profile.state = ProfileState.LOBBY
                 profile.queuePlayer = null
                 QueueManager.getQueue(profile.uuid)?.queuePlayers?.removeIf { it.uuid == player.uniqueId }
                 giveHotbar(profile)
-            }.itemStack)
+            }
+        ))
+    }
 
-        }else if (profile.state == ProfileState.EVENT) {
+    private fun setupEventHotbar(player: Player, profile: Profile) {
+        val items = mutableListOf<HotbarItem>()
 
-            if (player.hasPermission("lpractice.command.event.forcestart")) {
-                if (EventManager.event != null && EventManager.event?.state == EventState.ANNOUNCING) {
-                    player.inventory.setItem(0, createCustomItem(
-                        player,
-                        ItemBuilder(Material.HOPPER).name("&eForce Start").build(), true
-                    ) {
-                        player.chat("/event forcestart")
-                    }.itemStack)
+        if (player.hasPermission("lpractice.command.event.forcestart")) {
+            EventManager.event?.takeIf { it.state == EventState.ANNOUNCING }?.let {
+                items.add(HotbarItem(0, Material.HOPPER, "&eForce Start") {
+                    player.chat("/event forcestart")
+                })
+            }
+        }
+
+        items.add(HotbarItem(8, XMaterial.RED_DYE.parseMaterial()!!, "&cLeave Event") {
+            EventManager.event?.removePlayer(player)
+            Bukkit.broadcastMessage("${CC.GREEN}${player.name}${CC.YELLOW} has left the event. ${CC.GRAY}(${EventManager.event?.players?.size}/${EventManager.event?.requiredPlayers})")
+        })
+
+        setHotbarItems(player, items)
+    }
+
+    private fun setupSpectatingHotbar(player: Player, profile: Profile) {
+        setHotbarItems(player, listOf(
+            HotbarItem(8, XMaterial.RED_DYE.parseMaterial()!!, "&cLeave Spectating") {
+                profile.state = ProfileState.LOBBY
+                profile.spectatingMatch?.let { matchUUID ->
+                    Match.getSpectator(matchUUID)?.removeSpectator(player)
                 }
             }
+        ))
+    }
 
-            player.inventory.setItem(8, createCustomItem(
-                player,
-                ItemBuilder(XMaterial.RED_DYE.parseItem()).name("&cLeave Event").build(), true
-            ) {
-                EventManager.event?.removePlayer(player)
-                Bukkit.broadcastMessage("${CC.GREEN}${player.name}${CC.YELLOW} has left the event. ${CC.GRAY}(${EventManager.event?.players?.size}/${EventManager.event?.requiredPlayers})")
-            }.itemStack)
-        }else if (profile.state == ProfileState.SPECTATING) {
+    private fun setHotbarItems(player: Player, items: List<HotbarItem>) {
+        player.inventory.apply {
+            items.forEach { item ->
+                setItem(item.slot, createCustomItem(player, item.material, item.name, item.unbreakable, item.action))
+            }
+        }
+    }
 
-            player.inventory.setItem(8, createCustomItem(
-                player,
-                ItemBuilder(XMaterial.RED_DYE.parseItem()).name("&cLeave Spectating").build(),
-                true
-            ) {
-                profile.state = ProfileState.LOBBY
+    private fun createCustomItem(player: Player, material: Material, name: String, unbreakable: Boolean = false, consumer: Consumer<PlayerInteractEvent>): ItemStack {
+        val itemStack = ItemBuilder(material).name(name).apply {
+            if (unbreakable) {
+                addFlags(ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_UNBREAKABLE)
+                setUnbreakable(true)
+            }
+        }.build()
 
-                if (profile.spectatingMatch != null) {
-                    val match = Match.getByUUID(profile.spectatingMatch!!)
+        return CustomItemStack(player.uniqueId, itemStack).apply {
+            rightClick = true
+            clicked = consumer
+            create()
+        }.itemStack
+    }
 
-                    match?.removeSpectator(player)
+    private fun getPartyHotbarItems(profile: Profile): List<HotbarItem> {
+        return listOf(
+            HotbarItem(0, Material.NETHER_STAR, "&eParty Information") {
+                PartyManager.getByUUID(profile.party!!)?.let { PartyInformationMenu(it).openMenu(Bukkit.getPlayer(profile.uuid)) }
+            },
+            HotbarItem(4, Material.GOLD_AXE, "&eStart Party Event", true) {
+                PartyStartEventMenu().openMenu(Bukkit.getPlayer(profile.uuid))
+            },
+            HotbarItem(5, Material.DIAMOND_AXE, "&eParty Duel", true) {
+                PartyDuelProcedure(profile.uuid).apply {
+                    PartyDuelProcedure.duelProcedures.add(this)
                 }
-            }.itemStack)
-        }
+                PartyDuelSelectPartyMenu().openMenu(Bukkit.getPlayer(profile.uuid))
+            },
+            HotbarItem(8, XMaterial.RED_DYE.parseMaterial()!!, "&cLeave Party") {
+                val party = PartyManager.getByUUID(profile.party!!)!!
+                if (party.leader == profile.uuid) {
+                    party.players.forEach {
+                        val memberProfile = PracticePlugin.instance.profileManager.findById(it)!!
+                        memberProfile.party = null
+                        memberProfile.player.sendMessage(Locale.DISBANDED_PARTY.getMessage())
+                        giveHotbar(memberProfile)
+                    }
+                    PartyManager.parties.remove(party)
+                } else {
+                    party.players.remove(profile.uuid)
+                    profile.party = null
+                    giveHotbar(profile)
+                    party.sendMessage(Locale.LEFT_PARTY.getMessage())
+                }
+            }
+        )
     }
 
-    private fun createCustomItem(player: Player, itemStack: ItemStack, consumer: Consumer<PlayerInteractEvent>): CustomItemStack {
-        val customItemStack = CustomItemStack(player.uniqueId, itemStack)
-        customItemStack.rightClick = true
-        customItemStack.clicked
-        customItemStack.clicked = consumer
-
-        if (!CustomItemStack.customItemStacks.contains(customItemStack)) {
-            customItemStack.create()
-        }
-
-        return customItemStack
+    private fun getLobbyHotbarItems(profile: Profile): List<HotbarItem> {
+        return listOf(
+            HotbarItem(0, Material.IRON_SWORD, "&aPlay Casual &7(Right Click)", true) {
+                if (profile.state == ProfileState.LOBBY) UnrankedQueueMenu().openMenu(Bukkit.getPlayer(profile.uuid))
+            },
+            HotbarItem(1, Material.DIAMOND_SWORD, "&cPlay Competitive &7(Right Click)", true) {
+                if (profile.state == ProfileState.LOBBY) RankedQueueMenu().openMenu(Bukkit.getPlayer(profile.uuid))
+            },
+            HotbarItem(2, Material.BOOK, "&6Edit Kit &7(Right Click)") {
+                if (profile.state == ProfileState.LOBBY) KitEditorSelectKitMenu().openMenu(Bukkit.getPlayer(profile.uuid))
+            },
+            HotbarItem(4, Material.NETHER_STAR, "&dCreate Party &7(Right Click)") {
+                if (profile.state == ProfileState.LOBBY) {
+                    val party = Party(profile.uuid)
+                    party.players.add(profile.uuid)
+                    PartyManager.parties.add(party)
+                    profile.party = party.uuid
+                    giveHotbar(profile)
+                    Bukkit.getPlayer(profile.uuid)?.sendMessage(Locale.CREATED_PARTY.getMessage())
+                }
+            },
+            HotbarItem(6, Material.ITEM_FRAME, "&eView Leaderboards &7(Right Click)") {
+                LeaderboardRankedMenu(PracticePlugin.instance).openMenu(profile.player)
+            },
+            HotbarItem(7, Material.EYE_OF_ENDER, "&bHost Events &7(Right Click)") {
+                if (profile.state == ProfileState.LOBBY) Bukkit.getPlayer(profile.uuid)?.chat("/event host")
+            },
+            HotbarItem(8, Material.REDSTONE_COMPARATOR, "&bSettings &7(Right Click)") {
+                if (profile.state == ProfileState.LOBBY) Bukkit.getPlayer(profile.uuid)?.chat("/settings")
+            }
+        )
     }
 
-    private fun createCustomItem(player: Player, itemStack: ItemStack, remove: Boolean, consumer: Consumer<PlayerInteractEvent>): CustomItemStack {
-        val customItemStack = CustomItemStack(player.uniqueId, itemStack)
-        customItemStack.rightClick = true
-        customItemStack.clicked
-        customItemStack.clicked = consumer
-        customItemStack.removeOnClick = remove
-
-        if (!CustomItemStack.customItemStacks.contains(customItemStack)) {
-            customItemStack.create()
-        }
-
-        return customItemStack
-    }
+    private data class HotbarItem(
+        val slot: Int,
+        val material: Material,
+        val name: String,
+        val unbreakable: Boolean = false,
+        val action: Consumer<PlayerInteractEvent>
+    )
 }

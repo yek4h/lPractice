@@ -1,70 +1,71 @@
 package net.lyragames.practice.command
 
-import co.aikar.commands.BaseCommand
-import co.aikar.commands.annotation.CommandAlias
-import co.aikar.commands.annotation.CommandPermission
-import co.aikar.commands.annotation.HelpCommand
-import co.aikar.commands.annotation.Subcommand
+import com.jonahseguin.drink.annotation.Command
+import com.jonahseguin.drink.annotation.Require
+import com.jonahseguin.drink.annotation.Sender
 import net.lyragames.practice.Locale
 import net.lyragames.practice.event.EventState
-import net.lyragames.practice.event.menu.EventHostMenu
+import net.lyragames.practice.ui.events.EventHostMenu
 import net.lyragames.practice.manager.EventManager
 import net.lyragames.practice.utils.CC
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
-@CommandAlias("event")
-object EventCommand: BaseCommand() {
-    @HelpCommand
-    fun help(player: CommandSender) {
-        player.sendMessage("${CC.SECONDARY}Event Help")
-        player.sendMessage(CC.CHAT_BAR)
-        player.sendMessage("${CC.PRIMARY}/event join")
-        player.sendMessage("${CC.PRIMARY}/event host")
-        player.sendMessage("${CC.PRIMARY}/event start")
-        player.sendMessage(CC.CHAT_BAR)
+
+/*
+ * This project can't be redistributed without
+ * authorization of the developer
+ *
+ * Project @ lPractice
+ * @author yek4h © 2024
+ * Date: 17/06/2024
+*/
+
+class EventCommand {
+
+    @Command(name = "", desc = "Event help command")
+    fun help(@Sender sender: CommandSender) {
+        sender.sendMessage("""
+            ${CC.SECONDARY}Event Help
+            ${CC.CHAT_BAR}
+            ${CC.PRIMARY}/event join
+            ${CC.PRIMARY}/event host
+            ${CC.PRIMARY}/event start
+            ${CC.CHAT_BAR}
+        """.trimIndent())
     }
 
-    @Subcommand("host")
-    fun host(player: CommandSender) {
-        EventHostMenu().openMenu(player as Player)
+    @Command(name = "host", desc = "Host an event", aliases = ["hostevent"])
+    @Require("practice.command.event.host")
+    fun host(@Sender sender: CommandSender) {
+        val player = sender as? Player ?: return
+        EventHostMenu().openMenu(player)
     }
 
-    @Subcommand("join")
-    fun join(player: CommandSender) {
+    @Command(name = "join", desc = "Join an event", aliases = ["joinevent"])
+    @Require("practice.command.event.join")
+    fun join(@Sender sender: CommandSender) {
+        val player = sender as? Player ?: return
         val event = EventManager.event
 
-        if (event == null) {
-            player.sendMessage(Locale.NO_ACTIVE_EVENTS.getMessage())
-            return
+        when {
+            event == null -> player.sendMessage(Locale.NO_ACTIVE_EVENTS.getMessage())
+            event.requiredPlayers == event.players.size -> player.sendMessage(Locale.EVENT_FULL.getMessage())
+            event.getPlayer(player.uniqueId) != null -> player.sendMessage(Locale.ALREADY_IN_EVENT.getMessage())
+            event.state != EventState.ANNOUNCING -> player.sendMessage(Locale.ALREADY_STARTED.getMessage())
+            else -> event.addPlayer(player)
         }
-
-        if (event.requiredPlayers == event.players.size) {
-            player.sendMessage(Locale.EVENT_FULL.getMessage())
-            return
-        }
-
-        if (event.getPlayer((player as Player).uniqueId) != null) {
-            player.sendMessage(Locale.ALREADY_IN_EVENT.getMessage())
-            return
-        }
-
-        if (event.state != EventState.ANNOUNCING) {
-            player.sendMessage(Locale.ALREADY_STARTED.getMessage())
-            return
-        }
-
-        event.addPlayer(player)
     }
 
-    @CommandPermission("lpractice.command.event.forcestart")
-    @Subcommand("start|forcestart|fs")
-    fun forcestart(player: CommandSender) {
+    @Command(name = "start", desc = "Force start an event", aliases = ["forcestart", "fs"])
+    @Require("practice.command.event.forcestart")
+    fun forcestart(@Sender sender: CommandSender) {
+        val player = sender as? Player ?: return
 
-        if (EventManager.event?.players?.size!! < 2) {
+        val event = EventManager.event
+        if ((event?.players?.size ?: 0) < 2) {
             player.sendMessage(Locale.NOT_ENOUGH_PLAYER.getMessage())
-            return
+        } else {
+            event?.startRound()
         }
-
-        EventManager.event?.startRound()
     }
 }

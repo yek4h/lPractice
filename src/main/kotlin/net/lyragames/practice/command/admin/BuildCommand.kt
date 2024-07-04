@@ -1,23 +1,33 @@
 package net.lyragames.practice.command.admin
 
-import co.aikar.commands.BaseCommand
-import co.aikar.commands.annotation.CommandAlias
-import co.aikar.commands.annotation.CommandPermission
-import net.lyragames.practice.profile.Profile
+import com.jonahseguin.drink.annotation.Command
+import com.jonahseguin.drink.annotation.Require
+import com.jonahseguin.drink.annotation.Sender
+import net.lyragames.practice.PracticePlugin
 import net.lyragames.practice.utils.CC
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 
-object BuildCommand: BaseCommand() {
+/*
+ * This project can't be redistributed without
+ * authorization of the developer
+ *
+ * Project @ lPractice
+ * @author yek4h © 2024
+ * Date: 17/06/2024
+*/
 
-    @CommandAlias("build")
-    @CommandPermission("lpractice.command.build")
-    fun build(player: CommandSender) {
-        val profile = Profile.getByUUID((player as Player).uniqueId)
+class BuildCommand {
 
-        if (profile?.match != null) return
+    @Command(name = "", desc = "Toggle build mode")
+    @Require("practice.command.build")
+    fun build(@Sender sender: CommandSender) {
+        val player = sender as Player
+        val profile = PracticePlugin.instance.profileManager.findById(player.uniqueId)!!
 
-        if (profile?.canBuild!!) {
+        if (profile.match != null) return
+
+        if (profile.canBuild == true) {
             profile.canBuild = false
             player.sendMessage("${CC.RED}You can no longer build")
         } else {

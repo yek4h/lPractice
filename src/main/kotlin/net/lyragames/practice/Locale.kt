@@ -4,90 +4,81 @@ import net.lyragames.practice.utils.CC
 
 enum class Locale(private val path: String) {
 
-    CANT_DO_THIS("cant-do-this"),
-    CLICK_TO_JOIN("click-to-join"),
-    CLICK_TO_ACCEPT("click-to-accept"),
+    CANT_DO_THIS("CANT-DO-THIS"),
+    CLICK_TO_JOIN("CLICK-TO-JOIN"),
+    CLICK_TO_ACCEPT("CLICK-TO-ACCEPT"),
 
-    CANT_DUEL_YOURSELF("duel.cant-duel-yourself"),
-    ONGOING_DUEL("duel.ongoing-duel"),
-    BUSY_PLAYER("duel.busy-player"),
-    DISABLED_DUELS("duel.duel-disabled"),
-    INVALID_DUEL("duel.invalid-duel"),
+    CANT_DUEL_YOURSELF("DUEL.CANT-DUEL-YOURSELF"),
+    ONGOING_DUEL("DUEL.ONGOING-DUEL"),
+    BUSY_PLAYER("DUEL.BUSY-PLAYER"),
+    DISABLED_DUELS("DUEL.DUEL-DISABLED"),
+    INVALID_DUEL("DUEL.INVALID-DUEL"),
 
-    DUEL_REQUEST("duel.duel-request"),
-    DUEL_REQUEST_FOOTER("duel.duel-request-footer"),
+    DUEL_REQUEST("DUEL.DUEL-REQUEST"),
+    DUEL_REQUEST_FOOTER("DUEL.DUEL-REQUEST-FOOTER"),
 
-    NOT_IN_A_PARTY("party.not-in-a-party"),
-    OTHER_NOT_IN_A_PARTY("party.other-not-in-a-party"),
+    NOT_IN_A_PARTY("PARTY.NOT-IN-A-PARTY"),
+    OTHER_NOT_IN_A_PARTY("PARTY.OTHER-NOT-IN-A-PARTY"),
 
-    JOINED_PARTY("party.joined-party"),
-    CANT_ACCEPT_PARTY_DUEL("party.cant-accept-duel-request"),
-    ALREADY_IN_PARTY("party.already-in-party"),
-    CREATED_PARTY("party.created-party"),
-    DISBANDED_PARTY("party.disbanded-party"),
-    LEFT_PARTY("party.left-party"),
-    CANT_INVITE_YOURSELF("party.cant-invite-yourself"),
-    PLAYER_ALREADY_IN_PARTY("party.player-already-in-party"),
-    ALREADY_INVITED_PLAYER("party.already-invited-player"),
-    PARTY_INVITED_MESSAGE("party.invited-message"),
-    JOIN_OWN_PARTY("party.join-own-party"),
-    ISNT_IN_PARTY("party.isnt-in-party"),
-    BANNED_FROM_PARTY("party.banned-from-party"),
-    NOT_INVITED("party.not-invited"),
-    PARTY_EXPIRED("party.party-expired"),
-    JOIN_PARTY_BROADCAST("party.joined-party-broadcast"),
+    JOINED_PARTY("PARTY.JOINED-PARTY"),
+    CANT_ACCEPT_PARTY_DUEL("PARTY.CANT-ACCEPT-DUEL-REQUEST"),
+    ALREADY_IN_PARTY("PARTY.ALREADY-IN-PARTY"),
+    CREATED_PARTY("PARTY.CREATED-PARTY"),
+    DISBANDED_PARTY("PARTY.DISBANDED-PARTY"),
+    LEFT_PARTY("PARTY.LEFT-PARTY"),
+    CANT_INVITE_YOURSELF("PARTY.CANT-INVITE-YOURSELF"),
+    PLAYER_ALREADY_IN_PARTY("PARTY.PLAYER-ALREADY-IN-PARTY"),
+    ALREADY_INVITED_PLAYER("PARTY.ALREADY-INVITED-PLAYER"),
+    PARTY_INVITED_MESSAGE("PARTY.INVITED-MESSAGE"),
+    JOIN_OWN_PARTY("PARTY.JOIN-OWN-PARTY"),
+    ISNT_IN_PARTY("PARTY.ISNT-IN-PARTY"),
+    BANNED_FROM_PARTY("PARTY.BANNED-FROM-PARTY"),
+    NOT_INVITED("PARTY.NOT-INVITED"),
+    PARTY_EXPIRED("PARTY.PARTY-EXPIRED"),
+    JOIN_PARTY_BROADCAST("PARTY.JOINED-PARTY-BROADCAST"),
 
+    NO_ACTIVE_EVENTS("EVENT.NO-ACTIVE-EVENTS"),
+    EVENT_FULL("EVENT.EVENT-FULL"),
+    ALREADY_IN_EVENT("EVENT.ALREADY-IN"),
+    ALREADY_STARTED("EVENT.ALREADY-STARTED"),
+    NOT_ENOUGH_PLAYER("EVENT.NOT-ENOUGH-PLAYERS"),
+    NOT_IN_FFA("FFA.NOT-IN-FFA"),
+    LEFT_FFA("FFA.LEFT-FFA"),
 
-    NO_ACTIVE_EVENTS("event.no-active-events"),
-    EVENT_FULL("event.event-full"),
-    ALREADY_IN_EVENT("event.already-in"),
-    ALREADY_STARTED("event.already-started"),
-    NOT_ENOUGH_PLAYER("event.not-enough-players"),
-    NOT_IN_FFA("ffa.not-in-ffa"),
-    LEFT_FFA("ffa.left-ffa"),
+    COULDNT_FIND_INVENTORY("INVENTORY.COULDN'T-FIND"),
 
-    COULDNT_FIND_INVENTORY("inventory.couldnt-find"),
+    STOPPED_SPECTATING("SPECTATE.STOPPED-SPECTATING"),
+    STOPPED_SPECTATING_SILENT("SPECTATE.STOPPED-SPECTATING-SILENT"),
+    STARTED_SPECTATING("SPECTATE.STARTED-SPECTATING"),
+    STARTED_SPECTATING_SILENT("SPECTATE.STARTED-SPECTATING-SILENT"),
 
-    STOPPED_SPECTATING("spectate.stopped-spectating"),
+    NOT_IN_A_MATCH("SPECTATE.NOT-IN-A-MATCH"),
+    SPECTATING_DISABLED("SPECTATE.SPECTATING-DISABLED"),
 
-    STOPPED_SPECTATING_SILENT("spectate.stopped-spectating-silent"),
+    PLAYER_DISCONNECTED("MATCH.DISCONNECTED"),
+    PLAYER_DIED("MATCH.DIED-NATURALLY"),
+    PLAYED_KILLED("MATCH.KILLED-BY-PLAYER"),
 
-    STARTED_SPECTATING("spectate.started-spectating"),
-    STARTED_SPECTATING_SILENT("spectate.started-spectating-silent"),
+    BREAK_OWN_BED("BEDFIGHTS.BREAK-OWN-BED"),
+    BED_ALREADY_BROKEN("BEDFIGHTS.BED-ALREADY-BROKEN"),
+    BED_DESTROYED("BEDFIGHTS.BED-DESTROYED"),
+    BEDFIGHTS_PLAYER_KILLED("BEDFIGHTS.PLAYER-KILLED"),
+    FINAL_TAG("BEDFIGHTS.FINAL-TAG"),
 
-    NOT_IN_A_MATCH("spectate.not-in-a-match"),
-    SPECTATING_DISABLED("spectate.spectating-disabled"),
+    CANT_PLACE("BUILD.CANT-PLACE"),
 
-    PLAYER_DISCONNECTED("match.disconnected"),
-    PLAYER_DIED("match.died-naturally"),
-    PLAYED_KILLED("match.killed-by-player"),
+    FIREBALL_COOLDOWN("COOLDOWN.FIREBALL-COOLDOWN-TIME"),
+    ENDERPEARL_COOLDOWN_DONE("COOLDOWN.ENDERPEARL-COOLDOWN-DONE"),
+    ENDERPERL_COOLDOWN_TIME("COOLDOWN.ENDERPEARL-COOLDOWN-TIME"),
 
+    ELO_SEARCH("ELO.SEARCH"),
 
-    BREAK_OWN_BED("bedfights.break-own-bed"),
-    BED_ALREADY_BROKEN("bedfights.bed-already-broken"),
-    BED_DESTROYED("bedfights.bed-destroyed"),
+    ALREADY_RATED("RATING.ALREADY-RATED"),
+    THANK_YOU("RATING.THANK-YOU"),
+    DISABLED_MAP_RATING("RATING.DISABLED-RATING"),
 
-    BEDFIGHTS_PLAYER_KILLED("bedfights.player-killed"),
-    FINAL_TAG("bedfights.final-tag"),
-
-    CANT_PLACE("build.cant-place"),
-
-    FIREBALL_COOLDOWN("cooldown.fireball-cooldown-time"),
-
-    ENDERPEARL_COOLDOWN_DONE("cooldown.enderpearl-cooldown-done"),
-
-    ENDERPERL_COOLDOWN_TIME("cooldown.enderpearl-cooldown-time"),
-
-    ELO_SEARCH("elo.search"),
-
-    ALREADY_RATED("rating.already-rated"),
-    THANK_YOU("rating.thank-you"),
-
-    DISABLED_MAP_RATING("rating.disabled-rating"),
-
-    CANT_FIND_KIT("exception.cant-find-kit"),
-
-    CANT_FIND_ARENA("exception.cant-find-arena");
+    CANT_FIND_KIT("EXCEPTION.CANT-FIND-KIT"),
+    CANT_FIND_ARENA("EXCEPTION.CANT-FIND-ARENA");
 
     fun getMessage(): String {
         return CC.translate(getNormalMessage())

@@ -1,11 +1,8 @@
-# lPractice
+# ouirPractice
  
-I had this private for so long sitting on my GitHub and have decided to open-source it, The code is very old and not the best.
-You can go ahead and do whatever you want with this, If you are planning on selling a fork of this please credit this repo.
-
-This was my first project using Kotlin so please don't go too hard on me
-
 Made by Zowpy & Hyptex.
+
+Forked by yek4h
 
 # Features
 - Queues
@@ -21,3 +18,12 @@ Made by Zowpy & Hyptex.
 - FFA
 - Arena duplication
 - Spectating
+
+# Bugs
+- Spectator things are some buggy
+- Scoreboard, I was mading an scoreboard API but I'm not finishing it so change the scoreboard
+
+## Credits
+[lPractice Github Repo](https://github.com/Zowpy/lPractice)
+
+If you see that the code sucks, I did this literally in 1 week. but less than 1% usage in spark profiler lol

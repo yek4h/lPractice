@@ -3,14 +3,6 @@ package net.lyragames.practice.manager
 import net.lyragames.practice.PracticePlugin
 import net.lyragames.practice.arena.Arena
 import net.lyragames.practice.arena.impl.StandaloneArena
-import net.lyragames.practice.arena.impl.bedwars.BedWarsArena
-import net.lyragames.practice.arena.impl.bedwars.StandaloneBedWarsArena
-import net.lyragames.practice.arena.impl.bridge.BridgeArena
-import net.lyragames.practice.arena.impl.bridge.StandaloneBridgeArena
-import net.lyragames.practice.arena.impl.fireball.FireBallFightArena
-import net.lyragames.practice.arena.impl.fireball.StandaloneFireBallFightArena
-import net.lyragames.practice.arena.impl.mlgrush.MLGRushArena
-import net.lyragames.practice.arena.impl.mlgrush.StandaloneMLGRushArena
 import net.lyragames.practice.arena.type.ArenaType
 import net.lyragames.practice.kit.Kit
 import net.lyragames.practice.utils.Cuboid
@@ -23,6 +15,9 @@ import net.lyragames.practice.utils.LocationUtil
  * @author Zowpy
  * Created: 2/15/2022
  * Project: lPractice
+ *
+ * Optimized by yek4h
+ *
  */
 
 object ArenaManager {
@@ -30,129 +25,30 @@ object ArenaManager {
     fun load() {
         val configFile = PracticePlugin.instance.arenasFile
 
-        if (configFile.getConfigurationSection("arenas") == null) return
-
-        for (key in configFile.getConfigurationSection("arenas").getKeys(false)) {
+        configFile.getConfigurationSection("arenas")?.getKeys(false)?.forEach { key ->
             val section = configFile.getConfigurationSection("arenas.$key")
+            val arenaType = ArenaType.valueOf(section!!.getString("type")!!.uppercase())
 
-            val arena = when(ArenaType.valueOf(section.getString("type").uppercase())) {
-                ArenaType.MLGRUSH -> StandaloneMLGRushArena(key)
-                ArenaType.BEDFIGHT -> StandaloneBedWarsArena(key)
-                ArenaType.BRIDGE -> StandaloneBridgeArena(key)
-                ArenaType.FIREBALL_FIGHT -> StandaloneFireBallFightArena(key)
-                else -> StandaloneArena(key)
+            val arena = if (arenaType == ArenaType.STANDALONE) {
+                StandaloneArena(key)
+            } else {
+                Arena(key)
             }
 
-            arena.deadzone = section.getInt("deadzone")
-            arena.arenaType = ArenaType.valueOf(section.getString("type").uppercase())
-
-            arena.l1 = LocationUtil.deserialize(section.getString("l1"))
-            arena.l2 = LocationUtil.deserialize(section.getString("l2"))
-            arena.min = LocationUtil.deserialize(section.getString("min"))
-            arena.max = LocationUtil.deserialize(section.getString("max"))
-
-            if (arena.min != null && arena.max != null) {
-                arena.bounds = Cuboid(arena.min!!, arena.max!!)
+            arena.apply {
+                this.arenaType = arenaType
+                deadzone = section.getInt("deadzone")
+                l1 = LocationUtil.deserialize(section.getString("l1"))
+                l2 = LocationUtil.deserialize(section.getString("l2"))
+                min = LocationUtil.deserialize(section.getString("min"))
+                max = LocationUtil.deserialize(section.getString("max"))
+                bounds = Cuboid(min!!, max!!)
             }
 
-            if (arena is StandaloneMLGRushArena) {
-                arena.bed1 = LocationUtil.deserialize(section.getString("bed1"))
-                arena.bed2 = LocationUtil.deserialize(section.getString("bed2"))
-            }
-
-            if (arena is StandaloneBedWarsArena) {
-                arena.redSpawn = LocationUtil.deserialize(section.getString("redSpawn"))
-                arena.blueSpawn = LocationUtil.deserialize(section.getString("blueSpawn"))
-                arena.redBed = LocationUtil.deserialize(section.getString("redBed"))
-                arena.blueBed = LocationUtil.deserialize(section.getString("blueBed"))
-            }
-
-            if (arena is StandaloneFireBallFightArena) {
-                arena.redSpawn = LocationUtil.deserialize(section.getString("redSpawn"))
-                arena.blueSpawn = LocationUtil.deserialize(section.getString("blueSpawn"))
-                arena.redBed = LocationUtil.deserialize(section.getString("redBed"))
-                arena.blueBed = LocationUtil.deserialize(section.getString("blueBed"))
-            }
-
-            if (arena is StandaloneBridgeArena) {
-                arena.redSpawn = LocationUtil.deserialize(section.getString("redSpawn"))
-                arena.blueSpawn = LocationUtil.deserialize(section.getString("blueSpawn"))
-
-                arena.redPortal1 = LocationUtil.deserialize(section.getString("redPortal1"))
-                arena.redPortal2 = LocationUtil.deserialize(section.getString("redPortal2"))
-
-                arena.bluePortal1 = LocationUtil.deserialize(section.getString("bluePortal1"))
-                arena.bluePortal2 = LocationUtil.deserialize(section.getString("bluePortal2"))
-
-                arena.bluePortal = Cuboid(arena.bluePortal1!!, arena.bluePortal2!!)
-                arena.redPortal = Cuboid(arena.redPortal1!!, arena.redPortal2!!)
-            }
-
-            if (section.getConfigurationSection("duplicates") != null) {
-                for (duplicateKey in section.getConfigurationSection("duplicates").getKeys(false)) {
-                    var arena1 = Arena("$key$duplicateKey")
-                    val section1 = section.getConfigurationSection("duplicates.$duplicateKey")
-
-                    if (arena is StandaloneMLGRushArena) {
-                        arena1 = MLGRushArena("$key$duplicateKey")
-                    }
-
-                    arena1.min = LocationUtil.deserialize(section1.getString("min"))
-                    arena1.max = LocationUtil.deserialize(section1.getString("max"))
-
-                    if (arena1.min != null && arena1.max != null) {
-                        arena1.bounds = Cuboid(arena1.min!!, arena1.max!!)
-                    }
-
-                    arena1.duplicate = true
-
-                    if (arena1 is BedWarsArena) {
-                        arena1.redSpawn = LocationUtil.deserialize(section1.getString("redSpawn"))
-                        arena1.blueSpawn = LocationUtil.deserialize(section1.getString("blueSpawn"))
-                        arena1.redBed = LocationUtil.deserialize(section1.getString("redBed"))
-                        arena1.blueBed = LocationUtil.deserialize(section1.getString("blueBed"))
-
-                        arena.duplicates.add(arena1)
-                        continue
-                    }
-
-                    if (arena1 is FireBallFightArena) {
-                        arena1.redSpawn = LocationUtil.deserialize(section1.getString("redSpawn"))
-                        arena1.blueSpawn = LocationUtil.deserialize(section1.getString("blueSpawn"))
-                        arena1.redBed = LocationUtil.deserialize(section1.getString("redBed"))
-                        arena1.blueBed = LocationUtil.deserialize(section1.getString("blueBed"))
-
-                        arena.duplicates.add(arena1)
-                        continue
-                    }
-
-                    if (arena1 is BridgeArena) {
-                        arena1.redSpawn = LocationUtil.deserialize(section1.getString("redSpawn"))
-                        arena1.blueSpawn = LocationUtil.deserialize(section1.getString("blueSpawn"))
-
-                        arena1.redPortal1 = LocationUtil.deserialize(section1.getString("redPortal1"))
-                        arena1.redPortal2 = LocationUtil.deserialize(section1.getString("redPortal2"))
-
-                        arena1.bluePortal1 = LocationUtil.deserialize(section1.getString("bluePortal1"))
-                        arena1.bluePortal2 = LocationUtil.deserialize(section1.getString("bluePortal2"))
-
-                        arena1.bluePortal = Cuboid(arena1.bluePortal1!!, arena1.bluePortal2!!)
-                        arena1.redPortal = Cuboid(arena1.redPortal1!!, arena1.redPortal2!!)
-
-                        arena.duplicates.add(arena1)
-                        continue
-                    }
-
-                    arena1.l1 = LocationUtil.deserialize(section1.getString("l1"))
-                    arena1.l2 = LocationUtil.deserialize(section1.getString("l2"))
-
-                    if (arena1 is MLGRushArena) {
-                        arena1.bed1 = LocationUtil.deserialize(section1.getString("bed1"))
-                        arena1.bed2 = LocationUtil.deserialize(section1.getString("bed2"))
-                    }
-
-                    arena.duplicates.add(arena1)
-                }
+            section.getConfigurationSection("duplicates")?.getKeys(false)?.forEach { duplicateKey ->
+                val duplicateSection = section.getConfigurationSection("duplicates.$duplicateKey")
+                val duplicateArena = arena.createDuplicate("$key$duplicateKey", duplicateSection)
+                arena.duplicates.add(duplicateArena)
             }
 
             Arena.arenas.add(arena)
@@ -160,33 +56,27 @@ object ArenaManager {
     }
 
     fun getFreeArena(kit: Kit): Arena? {
-     /*   return Arena.arenas
-            .stream().filter { !it.duplicate && it.isSetup && it.isFree() && (kit.kitData.sumo && it.arenaType == ArenaType.SUMO)}
-            .findAny().orElse(null) */
+        val eligibleArenas = Arena.arenas.filter { it.isSetup && it.isFree() && it.isCompatible(kit) }
 
-        for (arena in Arena.arenas) {
-            if (!arena.isSetup) continue
-            if (!arena.free) continue
-
-            if (arena.arenaType == ArenaType.BUILD && !kit.kitData.build) continue
-            if (arena.arenaType == ArenaType.SUMO && !kit.kitData.sumo) continue
-            if (arena.arenaType == ArenaType.MLGRUSH && !kit.kitData.mlgRush) continue
-            if (arena.arenaType == ArenaType.BEDFIGHT && !kit.kitData.bedFights) continue
-            if (arena.arenaType == ArenaType.BRIDGE && !kit.kitData.bridge) continue
-            if (arena.arenaType == ArenaType.FIREBALL_FIGHT && !kit.kitData.fireballFight) continue
-
-            val kitData = kit.kitData
-
-            if (arena.arenaType == ArenaType.NORMAL && (kitData.build
-                        || kitData.bedFights
-                        || kitData.mlgRush
-                        || kitData.sumo
-                        || kitData.bridge
-                        || kitData.fireballFight)) continue
-
-            return arena
+        if (eligibleArenas.isEmpty()) {
+            println("No eligible arenas found")
+            return null
         }
 
+        val weightedArenas = eligibleArenas.map { it to (ArenaRatingManager.getAverageRating(it) + 1) }
+        val totalWeight = weightedArenas.sumByDouble { it.second }
+        val randomValue = Math.random() * totalWeight
+
+        var cumulativeWeight = 0.0
+        for ((arena, weight) in weightedArenas) {
+            cumulativeWeight += weight
+            if (randomValue <= cumulativeWeight) {
+                println("Selected arena: ${arena.name} with weight $weight")
+                return arena
+            }
+        }
+
+        println("Failed to select an arena")
         return null
     }
 }

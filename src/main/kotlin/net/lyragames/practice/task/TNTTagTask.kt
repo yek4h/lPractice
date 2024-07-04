@@ -11,13 +11,11 @@ import org.bukkit.scheduler.BukkitRunnable
 /**
  * This Project is property of Zowpy © 2022
  * Redistribution of this Project is not allowed
- *
- * @author Zowpy
  * Created: 4/1/2022
  * Project: lPractice
  */
 
-object TNTTagTask: BukkitRunnable() {
+object TNTTagTask : BukkitRunnable() {
 
     init {
         this.runTaskTimerAsynchronously(PracticePlugin.instance, 20, 20)
@@ -31,7 +29,7 @@ object TNTTagTask: BukkitRunnable() {
         val seconds = 60 - (System.currentTimeMillis() - event.started) / 1000
 
         when (seconds) {
-            30L,15L,10L,5L,4L,3L,2L,1L -> {
+            30L, 15L, 10L, 5L, 4L, 3L, 2L, 1L -> {
                 event.sendMessage("${CC.PRIMARY}The round is ending in ${CC.SECONDARY}$seconds${CC.PRIMARY} seconds.")
             }
         }

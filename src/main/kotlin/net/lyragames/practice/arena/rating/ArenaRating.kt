@@ -27,7 +27,8 @@ class ArenaRating(val uuid: UUID, val stars: Int, val user: UUID, val arena: Str
 
     fun save() {
         CompletableFuture.runAsync {
-            PracticePlugin.instance.practiceMongo.arenaRatings.replaceOne(Filters.eq("uuid", uuid.toString()), toBson(), ReplaceOptions().upsert(true))
+            PracticePlugin.instance.mongoManager.arenaRatingsCollection
+                .replaceOne(Filters.eq("uuid", uuid.toString()), toBson(), ReplaceOptions().upsert(true))
         }
     }
 }

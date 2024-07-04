@@ -1,7 +1,8 @@
 package net.lyragames.practice.kit.admin
 
-import me.zowpy.menu.Menu
-import me.zowpy.menu.buttons.Button
+import net.lyragames.practice.PracticePlugin
+import rip.katz.api.menu.Menu
+import rip.katz.api.menu.Button
 import net.lyragames.practice.kit.Kit
 import net.lyragames.practice.utils.CC
 import net.lyragames.practice.utils.ItemBuilder
@@ -34,12 +35,12 @@ class KitPresetMenu(val kit: Kit): Menu() {
                     )).build()
             }
             override fun clicked(player: Player, slot: Int, clickType: ClickType?, hotbarButton: Int) {
-                kit.kitData.sumo = true
-                kit.kitData.fallDamage = false
-                kit.kitData.hunger = false
-                kit.kitData.ffa = false
+                kit.sumo = true
+                kit.fallDamage = false
+                kit.hunger = false
+                kit.ffa = false
 
-                kit.save()
+                PracticePlugin.instance.kitManager.save()
                 player.sendMessage("${CC.PRIMARY}You have loaded the ${CC.SECONDARY}Sumo${CC.PRIMARY} preset!")
             }
         }
@@ -56,13 +57,13 @@ class KitPresetMenu(val kit: Kit): Menu() {
                     )).build()
             }
             override fun clicked(player: Player, slot: Int, clickType: ClickType?, hotbarButton: Int) {
-                kit.kitData.bedFights = true
-                kit.kitData.hunger = false
-                kit.kitData.fallDamage = true
-                kit.kitData.ffa = false
-                kit.kitData.regeneration = true
+                kit.bedFights = true
+                kit.hunger = false
+                kit.fallDamage = true
+                kit.ffa = false
+                kit.regeneration = true
 
-                kit.save()
+                PracticePlugin.instance.kitManager.save()
                 player.sendMessage("${CC.PRIMARY}You have loaded the ${CC.SECONDARY}BedFights${CC.PRIMARY} preset!")
             }
         }
@@ -79,13 +80,13 @@ class KitPresetMenu(val kit: Kit): Menu() {
                     )).build()
             }
             override fun clicked(player: Player, slot: Int, clickType: ClickType?, hotbarButton: Int) {
-                kit.kitData.mlgRush = true
-                kit.kitData.hunger = false
-                kit.kitData.fallDamage = true
-                kit.kitData.ffa = false
-                kit.kitData.regeneration = true
+                kit.mlgRush = true
+                kit.hunger = false
+                kit.fallDamage = true
+                kit.ffa = false
+                kit.regeneration = true
 
-                kit.save()
+                PracticePlugin.instance.kitManager.save()
                 player.sendMessage("${CC.PRIMARY}You have loaded the ${CC.SECONDARY}MLGRush${CC.PRIMARY} preset!")
             }
         }
@@ -103,13 +104,13 @@ class KitPresetMenu(val kit: Kit): Menu() {
                     )).build()
             }
             override fun clicked(player: Player, slot: Int, clickType: ClickType?, hotbarButton: Int) {
-                kit.kitData.bridge = true
-                kit.kitData.hunger = false
-                kit.kitData.fallDamage = false
-                kit.kitData.ffa = false
-                kit.kitData.regeneration = true
+                kit.bridge = true
+                kit.hunger = false
+                kit.fallDamage = false
+                kit.ffa = false
+                kit.regeneration = true
 
-                kit.save()
+                PracticePlugin.instance.kitManager.save()
                 player.sendMessage("${CC.PRIMARY}You have loaded the ${CC.SECONDARY}Bridge${CC.PRIMARY} preset!")
             }
         }
@@ -126,13 +127,13 @@ class KitPresetMenu(val kit: Kit): Menu() {
                     )).build()
             }
             override fun clicked(player: Player, slot: Int, clickType: ClickType?, hotbarButton: Int) {
-                kit.kitData.fireballFight = true
-                kit.kitData.hunger = false
-                kit.kitData.fallDamage = false
-                kit.kitData.ffa = false
-                kit.kitData.regeneration = true
+                kit.fireballFight = true
+                kit.hunger = false
+                kit.fallDamage = false
+                kit.ffa = false
+                kit.regeneration = true
 
-                kit.save()
+                PracticePlugin.instance.kitManager.save()
                 player.sendMessage("${CC.PRIMARY}You have loaded the ${CC.SECONDARY}Fireball fights${CC.PRIMARY} preset!")
             }
         }

@@ -1,5 +1,10 @@
 package net.lyragames.practice.profile
 
+import dev.yek4h.practice.util.scoreboard.Aether
+import dev.yek4h.practice.util.scoreboard.board.Board
+import dev.yek4h.practice.util.scoreboard.board.Board.Companion.getByPlayer
+import dev.yek4h.practice.util.scoreboard.event.BoardCreateEvent
+import net.lyragames.practice.PracticePlugin
 import net.lyragames.practice.constants.Constants
 import net.lyragames.practice.manager.FFAManager
 import net.lyragames.practice.manager.QueueManager
@@ -17,116 +22,131 @@ import org.bukkit.event.Listener
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerQuitEvent
+import java.util.concurrent.CompletableFuture
 
-/**
- * This Project is property of Zowpy © 2022
- * Redistribution of this Project is not allowed
- *
- * @author Zowpy
- * Created: 2/15/2022
- * Project: lPractice
- */
+object ProfileListener : Listener {
 
-object ProfileListener: Listener {
+    private var xd: Boolean = false
 
     @EventHandler
     fun onAsyncLogin(event: AsyncPlayerPreLoginEvent) {
-        try {
-            val profile = Profile(event.uniqueId, event.name);
-            profile.load()
-            Profile.profiles[event.uniqueId] = profile;
-            /*
-            val profile = Profile(event.uniqueId, event.name)
-            profile.load()
-            Profile.profiles.add(profile)
+        if (event.name == null) {
+            return
+        }
 
+        CompletableFuture.runAsync {
+            try {
+                var profile = ProfileManager.findById(event.uniqueId)
 
-             */
+                if (profile == null) {
+                    profile = Profile(event.uniqueId).apply {
+                        name = event.name
+                        load()  // Load the profile from the database
+                        save(true)  // Save the profile after loading
+                    }
+                    ProfileManager.profiles[profile.uuid] = profile
+                } else {
+                    profile.name = event.name
+                    profile.save(true)
+                }
 
-        } catch (e: Exception) {
-            event.loginResult = AsyncPlayerPreLoginEvent.Result.KICK_OTHER
-            event.kickMessage = CC.RED + "Failed to load your profile!"
-            e.printStackTrace()
+                // Update the profile in the ProfileManager
+                ProfileManager.profiles.putIfAbsent(profile.uuid, profile)
+
+                // Allow the login
+                event.allow()
+            } catch (e: Exception) {
+                event.apply {
+                    loginResult = AsyncPlayerPreLoginEvent.Result.KICK_OTHER
+                    kickMessage = CC.RED + "Failed to load your profile!"
+                }
+                e.printStackTrace()
+            }
         }
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
     fun onPlayerJoin(event: PlayerJoinEvent) {
-        PlayerUtil.allowMovement(event.player)
-        PlayerUtil.reset(event.player)
+        val player = event.player
+        event.joinMessage = null
+        val hiMessage = PracticePlugin.instance.settingsFile.getStringList("WELCOME-MESSAGE")
 
-        val profile = Profile.getByUUID(event.player.uniqueId)
-        profile?.state = ProfileState.LOBBY
+        hiMessage.forEach {
+            player.sendMessage(CC.translate(it))
+        }
+        PracticePlugin.instance.hologramManager.show(player)
 
-        // Load in permissions and rank data to give player abilities like flight on join and other perks
+        val deboy = PracticePlugin.instance.deboy
 
-        if (Constants.SPAWN != null) {
-            event.player.teleport(Constants.SPAWN)
+        deboy.createScoreboard(event.player);
+
+
+        PlayerUtil.allowMovement(player)
+        PlayerUtil.reset(player)
+
+        val profile = PracticePlugin.instance.profileManager.findById(player.uniqueId)!!.apply {
+            state = ProfileState.LOBBY
         }
 
-        Hotbar.giveHotbar(Profile.getByUUID(event.player.uniqueId)!!)
+        Constants.SPAWN?.let { player.teleport(it) }
+        Hotbar.giveHotbar(profile)
 
-        for (player in Bukkit.getOnlinePlayers()) {
-            event.player.hidePlayer(player)
-            player.hidePlayer(event.player)
-        }
+        val entityPlayer = (player as CraftPlayer).handle
 
-        val entityPlayer = (event.player as CraftPlayer).handle
+        /*¡Bukkit.getOnlinePlayers().forEach {
+            player.hidePlayer(it)
+            it.hidePlayer(player)
+        }*/
 
-        for (ffa in FFAManager.ffaMatches) {
-            for (item in ffa.droppedItems) {
-                val destroy = PacketPlayOutEntityDestroy(item.entityId)
-
-                entityPlayer.playerConnection.sendPacket(destroy)
-            }
+        FFAManager.ffaMatches.forEach { ffa ->
+            ffa.droppedItems.map { PacketPlayOutEntityDestroy(it.entityId) }
+                .forEach { entityPlayer.playerConnection.sendPacket(it) }
         }
     }
 
     @EventHandler
     fun onQuit(event: PlayerQuitEvent) {
         val player = event.player
-        val profile = Profile.getByUUID(player.uniqueId)
+        val profile = PracticePlugin.instance.profileManager.findById(player.uniqueId)!!
+        event.quitMessage = null
+        PracticePlugin.instance.hologramManager.hide(player)
 
-        if (profile?.state == ProfileState.QUEUE) {
-
-            if (profile.queuePlayer != null) {
-
-                val queue = QueueManager.getQueue(player.uniqueId)
-                queue?.queuePlayers?.remove(profile.queuePlayer)
-
-                profile.state = ProfileState.LOBBY
-                profile.queuePlayer = null
+        when (profile.state) {
+            ProfileState.QUEUE -> {
+                profile.queuePlayer?.let {
+                    QueueManager.getQueue(player.uniqueId)?.queuePlayers?.remove(it)
+                    profile.state = ProfileState.LOBBY
+                    profile.queuePlayer = null
+                }
             }
-
-        }
-
-        if (profile?.state == ProfileState.MATCH) {
-
-            if (profile.match != null) {
-
-                val match = Match.getByUUID(profile.match!!)
-
-                match?.handleQuit(match.getMatchPlayer(player.uniqueId)!!)
+            ProfileState.MATCH -> {
+                profile.match?.let { matchId ->
+                    Match.getByUUID(matchId)?.getMatchPlayer(player.uniqueId)?.let { matchPlayer ->
+                        Match.getByUUID(matchId)?.handleQuit(matchPlayer)
+                        ProfileState.LOBBY
+                    }
+                }
             }
-        }
+            ProfileState.SPECTATING -> {
+                if (profile.spectatingMatch == null) {
+                    return
+                }
 
-        if (profile?.state == ProfileState.SPECTATING) {
-
-            if (profile.spectatingMatch != null) {
-
-                val match = Match.getByUUID(profile.spectatingMatch!!)
-
-                match?.removeSpectator(player)
+                Match.getSpectator(profile.spectatingMatch!!)?.removeSpectator(player)
+                ProfileState.LOBBY
             }
+            ProfileState.FFA -> {
+                profile.ffa?.let { ffaId ->
+                    FFAManager.getByUUID(ffaId).getFFAPlayer(player.uniqueId).let { ffaPlayer ->
+                        FFAManager.getByUUID(ffaId).handleLeave(ffaPlayer, true)
+                        ProfileState.LOBBY
+                    }
+                }
+            }
+            else -> {}
         }
 
-        if (profile?.state == ProfileState.FFA) {
-            val ffa = FFAManager.getByUUID(profile.ffa!!)
-
-            ffa!!.handleLeave(ffa.getFFAPlayer(player.uniqueId)!!, true)
-        }
-
-        CustomItemStack.customItemStacks.removeIf { it.uuid == player.uniqueId }
-        Profile.profiles.remove(player.uniqueId)
+        // Remover CustomItemStacks y perfiles de manera segura
+        CustomItemStack.removeAllByPlayer(player.uniqueId)
     }
 }

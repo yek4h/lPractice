@@ -1,21 +1,31 @@
 package net.lyragames.practice.command
 
-import co.aikar.commands.BaseCommand
-import co.aikar.commands.annotation.CommandAlias
+import com.jonahseguin.drink.annotation.Command
+import com.jonahseguin.drink.annotation.Require
+import com.jonahseguin.drink.annotation.Sender
 import net.lyragames.practice.Locale
 import net.lyragames.practice.PracticePlugin
-import net.lyragames.practice.match.menu.MatchDetailsMenu
+import net.lyragames.practice.ui.match.MatchDetailsMenu
 import net.lyragames.practice.match.snapshot.MatchSnapshot
-import net.lyragames.practice.utils.CC
 import org.bukkit.Bukkit
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 import java.util.*
 
-object MatchSnapshotCommand: BaseCommand() {
+/*
+ * This project can't be redistributed without
+ * authorization of the developer
+ *
+ * Project @ lPractice
+ * @author yek4h © 2024
+ * Date: 17/06/2024
+*/
 
-    @CommandAlias("matchsnapshot")
-    fun command(player: CommandSender, id: String) {
+class MatchSnapshotCommand {
+
+    @Command(name = "", desc = "View match snapshot details")
+    fun command(@Sender sender: CommandSender, id: String) {
+        val player = sender as Player
 
         val cachedInventory: MatchSnapshot? = try {
             MatchSnapshot.getByUuid(UUID.fromString(id))
@@ -28,7 +38,8 @@ object MatchSnapshotCommand: BaseCommand() {
             return
         }
 
-        Bukkit.getScheduler().runTask(PracticePlugin.instance) { MatchDetailsMenu(cachedInventory).openMenu(player as Player) }
-
+        Bukkit.getScheduler().runTask(PracticePlugin.instance) {
+            MatchDetailsMenu(cachedInventory).openMenu(player)
+        }
     }
 }

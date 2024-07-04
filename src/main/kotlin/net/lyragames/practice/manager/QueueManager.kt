@@ -1,75 +1,92 @@
 package net.lyragames.practice.manager
 
+import net.lyragames.practice.PracticePlugin
 import net.lyragames.practice.kit.Kit
-import net.lyragames.practice.profile.Profile
 import net.lyragames.practice.profile.ProfileState
 import net.lyragames.practice.queue.Queue
 import net.lyragames.practice.queue.QueuePlayer
+import net.lyragames.practice.queue.QueueType
+import net.lyragames.practice.match.Match
+import org.bukkit.entity.Player
+import org.bukkit.scheduler.BukkitRunnable
 import java.util.*
 
-
-/**
- * This Project is property of Zowpy © 2022
- * Redistribution of this Project is not allowed
- *
- * @author Zowpy
- * Created: 2/16/2022
- * Project: lPractice
- */
-
 object QueueManager {
-
-    val unrankedQueues: MutableList<Queue> = mutableListOf()
-    val rankedQueues: MutableList<Queue> = mutableListOf()
-
-    val queues: MutableList<Queue> = mutableListOf()
+    val queues: MutableMap<Pair<Kit, QueueType>, Queue> = mutableMapOf()
+    private val playingCounts: MutableMap<Pair<Kit, QueueType>, Int> = mutableMapOf()
 
     fun load() {
-        for (kit in Kit.kits) {
-            val queue = Queue(kit, false)
-            queues.add(queue)
-
-            if (kit.kitData.ranked) {
-                val queue1 = Queue(kit, true)
-                queues.add(queue1)
-
-                //rankedQueues.add(queue1)
+        for (kit in PracticePlugin.instance.kitManager.kits.values) {
+            addQueue(kit, QueueType.UNRANKED)
+            if (kit.ranked) {
+                addQueue(kit, QueueType.RANKED)
             }
         }
+        println("Queues loaded: ${queues.size}")
+        startUpdateTask()
     }
 
-    fun addToQueue(profile: Profile, queue: Queue) {
-        val queuePlayer = QueuePlayer(profile.uuid, profile.name!!, queue, profile.settings.pingRestriction)
-        queuePlayer.elo = profile.getKitStatistic(queue.kit.name)?.elo!!
+    private fun addQueue(kit: Kit, queueType: QueueType) {
+        queues[Pair(kit, queueType)] = Queue(kit, queueType)
+    }
+
+    fun addToQueue(player: Player, kit: Kit, queueType: QueueType) {
+        val queue = findQueue(kit, queueType) ?: return
+
+        val profile = PracticePlugin.instance.profileManager.findById(player.uniqueId)!!
+        val queuePlayer = QueuePlayer(player.uniqueId, player.name ?: "", queue, 0).apply {
+            elo = profile.getKitStatistic(queue.kit.name)?.elo ?: 0
+        }
 
         profile.queuePlayer = queuePlayer
         profile.state = ProfileState.QUEUE
-
-        queue.queuePlayers.add(queuePlayer)
+        queue.addPlayer(queuePlayer)
     }
 
-    fun findQueue(kit: Kit, ranked: Boolean): Queue? {
-        return queues.firstOrNull { it.kit.name == kit.name && it.ranked == ranked }
+    fun findQueue(kit: Kit, queueType: QueueType): Queue? {
+        return queues[Pair(kit, queueType)]
     }
 
     fun getQueue(uuid: UUID): Queue? {
-        return queues.stream().filter { queue ->
-            queue.queuePlayers.stream().anyMatch { it.uuid == uuid }
-        }.findFirst().orElse(null)
-    }
-
-    fun getByKit(kit: Kit): Queue? {
-        return queues.stream().filter { it.kit.name.equals(kit.name, false) }
-            .findFirst().orElse(null)
-    }
-
-    fun inQueue(): Int {
-        var count = 0
-
-        for (queue in queues) {
-            count += queue.queuePlayers.size
+        return queues.values.firstOrNull { queue ->
+            queue.getQueueingPlayers().any { it.uuid == uuid }
         }
+    }
 
-        return count
+    fun getQueueByKit(kit: Kit): List<Queue> {
+        return queues.values.filter { it.kit.name.equals(kit.name, ignoreCase = true) }
+    }
+
+    fun getTotalQueueingPlayers(): Int {
+        return queues.values.sumOf { it.getPlayerCount() }
+    }
+
+    fun getPlayingCount(kit: Kit, queueType: QueueType): Int {
+        return playingCounts.getOrDefault(Pair(kit, queueType), 0)
+    }
+
+    fun updatePlayingCount(match: Match, increment: Int) {
+        val key = Pair(match.kit, if (match.ranked) QueueType.RANKED else QueueType.UNRANKED)
+        val currentCount = getPlayingCount(match.kit, if (match.ranked) QueueType.RANKED else QueueType.UNRANKED)
+        playingCounts[key] = currentCount + increment
+    }
+
+    private fun startUpdateTask() {
+        object : BukkitRunnable() {
+            override fun run() {
+                updateQueues()
+            }
+        }.runTaskTimer(PracticePlugin.instance, 0L, 20L) // Actualiza cada segundo (20 ticks)
+    }
+
+    private fun updateQueues() {
+        for (kit in PracticePlugin.instance.kitManager.kits.values) {
+            if (!queues.containsKey(Pair(kit, QueueType.UNRANKED))) {
+                addQueue(kit, QueueType.UNRANKED)
+            }
+            if (kit.ranked && !queues.containsKey(Pair(kit, QueueType.RANKED))) {
+                addQueue(kit, QueueType.RANKED)
+            }
+        }
     }
 }

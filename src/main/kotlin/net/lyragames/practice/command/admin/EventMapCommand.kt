@@ -1,8 +1,8 @@
 package net.lyragames.practice.command.admin
 
-import co.aikar.commands.BaseCommand
-import co.aikar.commands.CommandHelp
-import co.aikar.commands.annotation.*
+import com.jonahseguin.drink.annotation.Command
+import com.jonahseguin.drink.annotation.Require
+import com.jonahseguin.drink.annotation.Sender
 import net.lyragames.practice.event.map.EventMap
 import net.lyragames.practice.event.map.impl.TNTRunMap
 import net.lyragames.practice.event.map.impl.TNTTagMap
@@ -11,123 +11,131 @@ import net.lyragames.practice.manager.EventMapManager
 import net.lyragames.practice.utils.CC
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
-@CommandAlias("eventmap")
-@CommandPermission("lpractice.command.eventmap")
 
-object EventMapCommand: BaseCommand() {
+/*
+ * This project can't be redistributed without
+ * authorization of the developer
+ *
+ * Project @ lPractice
+ * @author yek4h © 2024
+ * Date: 17/06/2024
+*/
 
-   @HelpCommand
-   @Syntax("[page]")
-    fun help(help: CommandHelp) {
-        help.showHelp()
-       /*
-        sender.sendMessage("${CC.PRIMARY}EventMap Commands:")
-        sender.sendMessage("${CC.SECONDARY}/eventmap create <name>")
-        sender.sendMessage("${CC.SECONDARY}/eventmap delete <name>")
-        sender.sendMessage("${CC.SECONDARY}/eventmap spawn <name>")
-        sender.sendMessage("${CC.SECONDARY}/eventmap pos1 <name>")
-        sender.sendMessage("${CC.SECONDARY}/eventmap pos2 <name>")
-        sender.sendMessage("${CC.SECONDARY}/eventmap deadzone <name> <deadzone>")
-        sender.sendMessage("${CC.SECONDARY}/eventmap type <name> <type> - you can choose from Sumo & Brackets")
+class EventMapCommand {
 
-        */
+    @Command(name = "", desc = "Manage event maps")
+    @Require("practice.command.eventmap")
+    fun help(@Sender sender: CommandSender) {
+        sender.sendMessage("""
+            ${CC.PRIMARY}EventMap Commands:
+            ${CC.SECONDARY}/eventmap create <name>
+            ${CC.SECONDARY}/eventmap delete <name>
+            ${CC.SECONDARY}/eventmap spawn <name>
+            ${CC.SECONDARY}/eventmap pos1 <name>
+            ${CC.SECONDARY}/eventmap pos2 <name>
+            ${CC.SECONDARY}/eventmap deadzone <name> <deadzone>
+            ${CC.SECONDARY}/eventmap type <name> <type> - you can choose from Sumo & Brackets
+        """.trimIndent())
     }
 
-    @Subcommand("create")
-
-    fun create(player: CommandSender, @Single @Name("map") name: String) {
+    @Command(name = "create", desc = "Create an event map")
+    @Require("practice.command.eventmap.create")
+    fun create(@Sender sender: CommandSender, name: String) {
         if (EventMapManager.getByName(name) != null) {
-            player.sendMessage(CC.RED + "That event map already exists!")
+            sender.sendMessage("${CC.RED}That event map already exists!")
             return
         }
 
         val arena = EventMap(name)
         arena.save()
         EventMapManager.maps.add(arena)
-
-        player.sendMessage(CC.PRIMARY + "Successfully created " + CC.SECONDARY + "'$name'!")
+        sender.sendMessage("${CC.PRIMARY}Successfully created ${CC.SECONDARY}'$name'!")
     }
 
-    @Subcommand("delete")
-    fun delete(player: CommandSender, @Single @Name("map") arena: EventMap) {
+    @Command(name = "delete", desc = "Delete an event map")
+    @Require("practice.command.eventmap.delete")
+    fun delete(@Sender sender: CommandSender, arena: EventMap) {
         arena.delete()
         EventMapManager.maps.remove(arena)
-
-        player.sendMessage(CC.PRIMARY + "Successfully deleted " + CC.SECONDARY + "'${arena.name}'!")
+        sender.sendMessage("${CC.PRIMARY}Successfully deleted ${CC.SECONDARY}'${arena.name}'!")
     }
 
-    @Subcommand("spawn")
-    fun spawn(player: CommandSender, @Single @Name("map") arena: EventMap) {
-        arena.spawn = (player as Player).location
+    @Command(name = "spawn", desc = "Set the spawn location of an event map")
+    @Require("practice.command.eventmap.spawn")
+    fun setSpawn(@Sender sender: CommandSender, arena: EventMap) {
+        val player = sender as? Player ?: return
+        arena.spawn = player.location
         arena.save()
-
-        player.sendMessage(CC.PRIMARY + "Successfully set " + CC.SECONDARY + arena.name + CC.PRIMARY + " spawn point!")
+        sender.sendMessage("${CC.PRIMARY}Successfully set ${CC.SECONDARY}${arena.name}${CC.PRIMARY} spawn point!")
     }
 
-    @Subcommand("deadzone")
-    fun deadzone(player: CommandSender, @Single @Name("map") arena: EventMap, @Single @Name("deadzone")deadzone: Int) {
+    @Command(name = "deadzone", desc = "Set the deadzone of a TNT Run map")
+    @Require("practice.command.eventmap.deadzone")
+    fun setDeadzone(@Sender sender: CommandSender, arena: EventMap, deadzone: Int) {
         if (arena.type != EventMapType.TNT_RUN) {
-            player.sendMessage("${CC.RED}That option is not supported for this map type!")
+            sender.sendMessage("${CC.RED}That option is not supported for this map type!")
             return
         }
         (arena as TNTRunMap).deadzone = deadzone
         arena.save()
-
-        player.sendMessage(CC.PRIMARY + "Successfully set " + CC.SECONDARY + arena.name + CC.PRIMARY + " deadzone!")
+        sender.sendMessage("${CC.PRIMARY}Successfully set ${CC.SECONDARY}${arena.name}${CC.PRIMARY} deadzone!")
     }
 
-    @Subcommand("pos1|position1|l1|location1")
-    fun pos1(player: CommandSender, @Single @Name("map") arena: EventMap) {
-
-        if (arena.type == EventMapType.TNT_TAG || arena.type == EventMapType.TNT_RUN) {
-            player.sendMessage("${CC.RED}That option is not supported for this map type!")
+    @Command(name = "pos1", desc = "Set the first position of an event map", aliases = ["position1", "l1", "location1"])
+    @Require("practice.command.eventmap.pos1")
+    fun setPos1(@Sender sender: CommandSender, arena: EventMap) {
+        val player = sender as? Player ?: return
+        if (arena.type in listOf(EventMapType.TNT_TAG, EventMapType.TNT_RUN)) {
+            sender.sendMessage("${CC.RED}That option is not supported for this map type!")
             return
         }
-
-        arena.l1 = (player as Player).location
+        arena.l1 = player.location
         arena.save()
-
-        player.sendMessage(CC.PRIMARY + "Successfully set " + CC.SECONDARY + arena.name + CC.PRIMARY + " location 1!")
+        sender.sendMessage("${CC.PRIMARY}Successfully set ${CC.SECONDARY}${arena.name}${CC.PRIMARY} location 1!")
     }
 
-    @Subcommand("pos2|position2|l2|location2")
-    fun pos2(player: CommandSender, @Single @Name("map") arena: EventMap) {
-
-        if (arena.type == EventMapType.TNT_TAG || arena.type == EventMapType.TNT_RUN) {
-            player.sendMessage("${CC.RED}That option is not supported for this map type!")
+    @Command(name = "pos2", desc = "Set the second position of an event map", aliases = ["position2", "l2", "location2"])
+    @Require("practice.command.eventmap.pos2")
+    fun setPos2(@Sender sender: CommandSender, arena: EventMap) {
+        val player = sender as? Player ?: return
+        if (arena.type in listOf(EventMapType.TNT_TAG, EventMapType.TNT_RUN)) {
+            sender.sendMessage("${CC.RED}That option is not supported for this map type!")
             return
         }
-
-        arena.l2 = (player as Player).location
+        arena.l2 = player.location
         arena.save()
-
-        player.sendMessage(CC.PRIMARY + "Successfully set " + CC.SECONDARY + arena.name + CC.PRIMARY + " location 2!")
+        sender.sendMessage("${CC.PRIMARY}Successfully set ${CC.SECONDARY}${arena.name}${CC.PRIMARY} location 2!")
     }
 
-    @Subcommand("eventmap type")
-    fun type(player: CommandSender, @Single @Name("map") arena: EventMap, @Single @Name("type") type: EventMapType) {
+    @Command(name = "type", desc = "Set the type of an event map")
+    @Require("practice.command.eventmap.type")
+    fun setType(@Sender sender: CommandSender, arena: EventMap, type: EventMapType) {
         arena.type = type
-
-        if (type == EventMapType.TNT_RUN) {
-            val newArena = TNTRunMap(arena.name)
-            newArena.spawn = arena.spawn
-
-            EventMapManager.maps.removeIf { it.name.equals(arena.name, false) }
-            EventMapManager.maps.add(newArena)
-
-            newArena.save()
-        }else if (type == EventMapType.TNT_TAG) {
-            val newArena = TNTTagMap(arena.name)
-            newArena.spawn = arena.spawn
-
-            EventMapManager.maps.removeIf { it.name.equals(arena.name, false) }
-            EventMapManager.maps.add(newArena)
-
-            newArena.save()
-        }else {
-            arena.save()
+        when (type) {
+            EventMapType.TNT_RUN -> {
+                val newArena = TNTRunMap(arena.name).apply {
+                    spawn = arena.spawn
+                }
+                EventMapManager.maps.replace(arena.name, newArena)
+                newArena.save()
+            }
+            EventMapType.TNT_TAG -> {
+                val newArena = TNTTagMap(arena.name).apply {
+                    spawn = arena.spawn
+                }
+                EventMapManager.maps.replace(arena.name, newArena)
+                newArena.save()
+            }
+            else -> arena.save()
         }
+        sender.sendMessage("${CC.PRIMARY}Successfully set ${CC.SECONDARY}${arena.name}${CC.PRIMARY}'s type to ${CC.SECONDARY}${type.eventName}${CC.PRIMARY}!")
+    }
+}
 
-        player.sendMessage("${CC.PRIMARY}Successfully set ${CC.SECONDARY}${arena.name}${CC.PRIMARY}'s type to ${CC.SECONDARY}${type.eventName}${CC.PRIMARY}!")
+// Extension function to replace an item in a mutable list by name
+private fun MutableList<EventMap>.replace(name: String, newArena: EventMap) {
+    val index = indexOfFirst { it.name.equals(name, ignoreCase = true) }
+    if (index != -1) {
+        this[index] = newArena
     }
 }

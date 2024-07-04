@@ -3,7 +3,7 @@ package net.lyragames.practice.kit.editor.listener
 import net.lyragames.practice.event.player.EventPlayerState
 import net.lyragames.practice.kit.editor.KitManagementMenu
 import net.lyragames.practice.manager.EventManager
-import net.lyragames.practice.profile.Profile
+import net.lyragames.practice.PracticePlugin
 import net.lyragames.practice.profile.ProfileState
 import net.lyragames.practice.utils.CC
 import org.bukkit.GameMode
@@ -30,8 +30,8 @@ object KitEditorListener: Listener {
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     fun onAsyncPlayerChatEvent(event: AsyncPlayerChatEvent) {
-        val profile = Profile.getByUUID(event.player.uniqueId)
-        if (profile?.kitEditorData?.isRenaming()!!) {
+        val profile = PracticePlugin.instance.profileManager.findById(event.player.uniqueId)!!
+        if (profile.kitEditorData?.isRenaming()!!) {
             event.isCancelled = true
             if (event.message.length > 16) {
                 event.player.sendMessage(CC.RED + "The kit name must be under 16 characters!")
@@ -63,9 +63,9 @@ object KitEditorListener: Listener {
                     return
                 }
             }
-            val profile = Profile.getByUUID(player.uniqueId)
+            val profile = PracticePlugin.instance.profileManager.findById(player.uniqueId)!!
 
-            if (profile?.state == ProfileState.EVENT) {
+            if (profile.state == ProfileState.EVENT) {
                 val currentEvent = EventManager.event
                 val eventPlayer = currentEvent?.getPlayer(player.uniqueId)
 
@@ -82,9 +82,9 @@ object KitEditorListener: Listener {
                 return
             }
 
-            if (profile?.state != ProfileState.MATCH && profile?.state != ProfileState.FFA && player.gameMode == GameMode.SURVIVAL) {
+            if (profile.state != ProfileState.MATCH && profile.state != ProfileState.FFA && player.gameMode == GameMode.SURVIVAL) {
                 val clicked = event.clickedInventory
-                if (profile?.kitEditorData?.active!!) {
+                if (profile.kitEditorData?.active!!) {
                     if (clicked == player.openInventory.topInventory) {
                         if (event.cursor.type != Material.AIR &&
                             event.currentItem.type == Material.AIR ||

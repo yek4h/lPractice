@@ -1,0 +1,118 @@
+import java.nio.file.Paths
+
+plugins {
+    id 'idea'
+    id 'java'
+    id 'java-library'
+    id 'org.jetbrains.kotlin.jvm' version '1.9.10'
+    id 'maven-publish'
+    id 'com.github.johnrengelman.shadow' version '5.2.0'
+}
+
+group = 'net.lyragames'
+version = '1.0-SNAPSHOT'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    maven { url 'https://repo.papermc.io/repository/maven-public/' }
+    maven { url 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/' }
+    maven { url 'https://oss.sonatype.org/content/groups/public/' }
+    maven { url 'https://maven.elmakers.com/repository/' }
+    maven { url 'https://maven.enginehub.org/repo/' }
+    maven { url 'https://repo.dmulloy2.net/repository/public/' }
+    maven { url 'https://repo.codemc.io/repository/nms/' }
+    maven { url 'https://jitpack.io' }
+    maven { url 'https://repo.extendedclip.com/content/repositories/placeholderapi/' }
+}
+
+dependencies {
+    implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.10'
+
+    compileOnly 'org.spigotmc:spigot:1.8.8-R0.1-SNAPSHOT'
+    compileOnly 'org.projectlombok:lombok:1.18.20'
+
+    implementation 'com.jonahseguin:drink:1.0.5'
+    implementation 'com.google.code.gson:gson:2.9.0'
+    implementation 'org.mongodb:mongo-java-driver:3.12.10'
+    implementation 'io.github.thatkawaiisam:assemble:1.0-SNAPSHOT'
+    implementation 'com.github.cryptomorin:XSeries:7.9.1.1'
+    implementation 'dev.yair.deboy:Deboy:1.0-SNAPSHOT'
+
+    compileOnly 'dev.ryu.core:bukkit:1.5-SNAPSHOT'
+    compileOnly 'com.comphenix.protocol:ProtocolLib:4.7.0'
+    compileOnly 'me.clip:placeholderapi:2.11.6'
+    compileOnly 'com.github.ben-manes.caffeine:caffeine:3.1.8'
+
+    compileOnly 'rip.katz.api:Katto:1.0-SNAPSHOT'
+    compileOnly files('libs/samurai.jar')
+    implementation files('libs/FAWE.jar')
+
+    compileOnly 'com.sk89q.worldedit:worldedit-core:6.0.0-SNAPSHOT'
+    compileOnly 'com.sk89q.worldedit:worldedit-bukkit:6.0.0-SNAPSHOT'
+}
+
+compileJava.options.encoding = 'UTF-8'
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+    kotlinOptions {
+        jvmTarget = "1.8"
+        freeCompilerArgs += "-Xjsr305=strict"
+    }
+}
+
+tasks.withType(ProcessResources) {
+    filesMatching('**/*.properties') {
+        filter { String line -> new String(line.getBytes('ISO-8859-1'), 'UTF-8') }
+    }
+    filesMatching('**/*.yml') {
+        filter { String line -> new String(line.getBytes('ISO-8859-1'), 'UTF-8') }
+    }
+    filesMatching('**/*.json') {
+        filter { String line -> new String(line.getBytes('ISO-8859-1'), 'UTF-8') }
+    }
+    filesMatching('**/*.html') {
+        filter { String line -> new String(line.getBytes('ISO-8859-1'), 'UTF-8') }
+    }
+    filesMatching('**/*.txt') {
+        filter { String line -> new String(line.getBytes('ISO-8859-1'), 'UTF-8') }
+    }
+}
+
+sourceSets {
+    main.kotlin.srcDirs += 'src/main/kotlin'
+    main.java.srcDirs += 'src/main/java'
+}
+
+idea {
+    module {
+        inheritOutputDirs = true
+    }
+}
+
+publishing {
+    publications {
+        shadow(MavenPublication) { publication ->
+            project.shadow.component(publication)
+        }
+    }
+}
+
+shadowJar {
+    classifier = null
+    project.configurations.implementation.canBeResolved = true
+    configurations = [project.configurations.implementation]
+}
+
+def directory = Paths.get(System.getProperty("user.home"), "Desktop", ".new").toString()
+
+tasks.withType(Jar).configureEach {
+    destinationDirectory = file(directory)
+    archiveName("${project.name}-${project.version}.jar")
+}

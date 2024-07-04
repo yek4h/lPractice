@@ -1,49 +1,47 @@
 package net.lyragames.practice.command.admin
 
-import co.aikar.commands.BaseCommand
-import co.aikar.commands.annotation.CommandAlias
-import co.aikar.commands.annotation.Name
-
-import net.lyragames.practice.profile.Profile
+import com.jonahseguin.drink.annotation.Command
+import com.jonahseguin.drink.annotation.Require
+import com.jonahseguin.drink.annotation.Sender
+import net.lyragames.practice.PracticePlugin
 import net.lyragames.practice.profile.ProfileState
 import net.lyragames.practice.utils.CC
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
-import co.aikar.commands.annotation.Single as Single
 
-
-/**
- * This Project is property of Zowpy © 2022
- * Redistribution of this Project is not allowed
+/*
+ * This project can't be redistributed without
+ * authorization of the developer
  *
- * @author Zowpy
- * Created: 3/26/2022
- * Project: lPractice
- */
+ * Project @ lPractice
+ * @author yek4h © 2024
+ * Date: 17/06/2024
+*/
 
-object FollowCommand: BaseCommand() {
+class FollowCommand {
 
-    @CommandAlias("follow")
-    fun follow(player: CommandSender, @Single @Name("target") target: Player) {
+    @Command(name = "", desc = "Follow a target player")
+    @Require("practice.command.follow")
+    fun follow(@Sender sender: CommandSender, target: Player) {
         if (true) {
-            player.sendMessage("${CC.RED}This command is currently disabled!")
+            sender.sendMessage("${CC.RED}This command is currently disabled!")
             return
         }
 
-        val profile = Profile.getByUUID(target.uniqueId)
-        val profile1 = Profile.getByUUID((player as Player).uniqueId)
+        val player = sender as? Player ?: return
+        val targetProfile = PracticePlugin.instance.profileManager.findById(target.uniqueId)
+        val playerProfile = PracticePlugin.instance.profileManager.findById(player.uniqueId)!!
 
-        if (profile1?.state != ProfileState.LOBBY) return
+        if (playerProfile?.state != ProfileState.LOBBY) return
 
-        if (profile!!.followers.contains(player.uniqueId)) {
+        if (targetProfile?.followers?.contains(player.uniqueId) == true) {
             player.sendMessage("${CC.RED}You are already following ${target.name}.")
             return
         }
 
-        profile.followers.add(player.uniqueId)
-        profile1.following = true
+        targetProfile?.followers?.add(player.uniqueId)
+        playerProfile?.following = true
 
         player.sendMessage("${CC.PRIMARY}Started following ${CC.SECONDARY}${target.name}")
     }
-
 }

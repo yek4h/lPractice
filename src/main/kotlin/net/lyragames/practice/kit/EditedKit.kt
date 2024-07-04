@@ -14,4 +14,5 @@ import org.bukkit.inventory.ItemStack
 class EditedKit(var name: String) {
     var content: Array<ItemStack>? = null
     var armorContent: Array<ItemStack>? = null
+    var editContents: Array<ItemStack>? = null
 }

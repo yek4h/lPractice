@@ -1,33 +1,40 @@
 package net.lyragames.practice.command
 
-
-import co.aikar.commands.BaseCommand
-import co.aikar.commands.annotation.*
+import com.jonahseguin.drink.annotation.Command
+import com.jonahseguin.drink.annotation.Require
+import com.jonahseguin.drink.annotation.Sender
 import net.lyragames.practice.Locale
 import net.lyragames.practice.duel.procedure.DuelProcedure
-import net.lyragames.practice.duel.procedure.menu.DuelSelectKitMenu
+import net.lyragames.practice.ui.duels.DuelSelectKitMenu
 import net.lyragames.practice.manager.MatchManager
-import net.lyragames.practice.manager.PartyManager
-import net.lyragames.practice.profile.Profile
+import net.lyragames.practice.PracticePlugin
 import net.lyragames.practice.profile.ProfileState
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 
-@CommandAlias("duel")
-object DuelCommand: BaseCommand() {
+/*
+ * This project can't be redistributed without
+ * authorization of the developer
+ *
+ * Project @ lPractice
+ * @author yek4h © 2024
+ * Date: 17/06/2024
+*/
 
-    @Default
-    @Async
-    fun duel(sender: CommandSender, @Single @Name("other") target: Player) {
-        val player = sender as Player
+class DuelCommand {
+
+    @Command(name = "", desc = "Duel a player")
+    fun duel(@Sender sender: CommandSender, target: Player) {
+        val player = sender as? Player ?: return
+
         if (player.uniqueId == target.uniqueId) {
             player.sendMessage(Locale.CANT_DUEL_YOURSELF.getMessage())
             return
         }
 
-        val profile = Profile.getByUUID(target.uniqueId)
+        val profile = PracticePlugin.instance.profileManager.findById(target.uniqueId)!!
 
-        if (profile!!.duelRequests.any { it.uuid == player.uniqueId && !it.isExpired() }) {
+        if (profile.duelRequests.any { it.uuid == player.uniqueId && !it.isExpired() }) {
             player.sendMessage(Locale.ONGOING_DUEL.getMessage().replace("<target>", target.name))
             return
         }
@@ -48,10 +55,11 @@ object DuelCommand: BaseCommand() {
         DuelSelectKitMenu().openMenu(player)
     }
 
-    @Subcommand("accept")
-    @Async
-    fun accept(player: CommandSender, @Single @Name("player") target: Player) {
-        val profile = Profile.getByUUID((player as Player).uniqueId)
+    @Command(name = "accept", desc = "Accept a duel request")
+    @Require("practice.command.duel.accept")
+    fun accept(@Sender sender: CommandSender, target: Player) {
+        val player = sender as? Player ?: return
+        val profile = PracticePlugin.instance.profileManager.findById(player.uniqueId)!!
         val duelRequest = profile?.getDuelRequest(target.uniqueId)
 
         if (duelRequest == null) {
@@ -65,12 +73,10 @@ object DuelCommand: BaseCommand() {
         MatchManager.createMatch(
             duelRequest.kit,
             arena,
-            false,
+            null,
             true,
-            player as Player,
+            player,
             target
         )
     }
-
-
 }

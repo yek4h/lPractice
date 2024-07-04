@@ -42,7 +42,7 @@ class PartyDuelRequest(val partyUUID: UUID, val issuer: UUID) {
             .setText(" arena ${CC.SECONDARY}${arena?.name}${CC.PRIMARY}.")
             .then()
             .setText("${CC.SECONDARY} [Click to accept]")
-            .setCommand("/partyduel accept ${sender.name}")
+            .setCommand("/party accept ${sender.name}")
             .then()
             .build()
 

@@ -1,18 +1,18 @@
 package net.lyragames.practice.kit.editor
 
 import lombok.AllArgsConstructor
-import me.zowpy.menu.Menu
-import me.zowpy.menu.buttons.Button
-import me.zowpy.menu.buttons.impl.BackButton
+import rip.katz.api.menu.Menu
+import rip.katz.api.menu.Button
 import net.lyragames.practice.kit.EditedKit
 import net.lyragames.practice.kit.Kit
-import net.lyragames.practice.profile.Profile
+import net.lyragames.practice.PracticePlugin
 import net.lyragames.practice.utils.CC
 import net.lyragames.practice.utils.ItemBuilder
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.event.inventory.ClickType
 import org.bukkit.inventory.ItemStack
+import rip.katz.api.menu.buttons.BackButton
 
 
 /**
@@ -33,15 +33,15 @@ class KitManagementMenu(val kit: Kit): Menu() {
         isUpdateAfterClick = false
     }
 
-    override fun getTitle(player: Player?): String {
+    override fun getTitle(player: Player): String {
         return "Viewing " + kit.name + " kits"
     }
 
     override fun getButtons(player: Player): Map<Int, Button> {
         val buttons: MutableMap<Int, Button> = mutableMapOf()
 
-        val profile = Profile.getByUUID(player.uniqueId)
-        val kitLoadouts: MutableList<EditedKit?>? = profile?.getKitStatistic(kit.name)?.editedKits
+        val profile = PracticePlugin.instance.profileManager.findById(player.uniqueId)!!
+        val kitLoadouts: MutableList<EditedKit?>? = profile.getKitStatistic(kit.name)?.editedKits
 
         var startPos = -1
 
@@ -67,10 +67,10 @@ class KitManagementMenu(val kit: Kit): Menu() {
 
     override fun onClose(player: Player) {
         if (!isClosedByMenu) {
-            val profile = Profile.getByUUID(player.uniqueId)
-            profile?.kitEditorData?.kit = null
+            val profile = PracticePlugin.instance.profileManager.findById(player.uniqueId)!!
+            profile.kitEditorData?.kit = null
 
-            profile?.save()
+            profile.save(true)
         }
     }
 
@@ -90,9 +90,9 @@ class KitManagementMenu(val kit: Kit): Menu() {
         }
 
         override fun clicked(player: Player, slot: Int, clickType: ClickType?, hotbarButton: Int) {
-            val profile = Profile.getByUUID(player.uniqueId)
+            val profile = PracticePlugin.instance.profileManager.findById(player.uniqueId)!!
 
-            profile!!.getKitStatistic(kit!!.name)?.deleteKit(kitLoadout)
+            profile.getKitStatistic(kit!!.name)?.deleteKit(kitLoadout)
             KitManagementMenu(kit).openMenu(player)
         }
     }
@@ -105,8 +105,8 @@ class KitManagementMenu(val kit: Kit): Menu() {
         }
 
         override fun clicked(player: Player, slot: Int, clickType: ClickType?, hotbarButton: Int) {
-            val profile = Profile.getByUUID(player.uniqueId)
-            val kit = profile?.kitEditorData?.kit
+            val profile = PracticePlugin.instance.profileManager.findById(player.uniqueId)!!
+            val kit = profile.kitEditorData?.kit
 
             if (kit == null) {
                 player.closeInventory()
@@ -117,11 +117,12 @@ class KitManagementMenu(val kit: Kit): Menu() {
 
             kitLoadout.armorContent = kit.armorContent
             kitLoadout.content = kit.content
+            kitLoadout.editContents = kit.editorItems
 
             profile.getKitStatistic(kit.name)?.replaceKit(index, kitLoadout)
             profile.kitEditorData?.selectedKit = kitLoadout
 
-            profile.save()
+            profile.save(true)
 
             KitEditorMenu(index).openMenu(player)
         }
@@ -136,14 +137,15 @@ class KitManagementMenu(val kit: Kit): Menu() {
         }
 
         override fun clicked(player: Player, slot: Int, clickType: ClickType?, hotbarSlot: Int) {
-            currentlyOpenedMenus[player.uniqueId]?.isClosedByMenu = true
+            //currentlyOpenedMenus[player.uniqueId]?.isClosedByMenu = true
+            player.updateInventory()
             player.closeInventory()
            // player.sendMessage(Locale.KIT_EDITOR_START_RENAMING.format(kitLoadout.getCustomName()))
-            val profile = Profile.getByUUID(player.uniqueId)
-            profile?.kitEditorData?.kit = kit
-            profile?.kitEditorData?.selectedKit = kitLoadout
-            profile?.kitEditorData?.active = true
-            profile?.kitEditorData?.rename = true
+            val profile = PracticePlugin.instance.profileManager.findById(player.uniqueId)!!
+            profile.kitEditorData?.kit = kit
+            profile.kitEditorData?.selectedKit = kitLoadout
+            profile.kitEditorData?.active = true
+            profile.kitEditorData?.rename = true
         }
     }
 
@@ -157,9 +159,9 @@ class KitManagementMenu(val kit: Kit): Menu() {
         }
 
         override fun clicked(player: Player, slot: Int, clickType: ClickType?, hotbarSlot: Int) {
-            val profile = Profile.getByUUID(player.uniqueId)
+            val profile = PracticePlugin.instance.profileManager.findById(player.uniqueId)!!
 
-            if (profile?.kitEditorData?.kit == null) {
+            if (profile.kitEditorData?.kit == null) {
                 player.closeInventory()
                 return
             }
@@ -175,11 +177,15 @@ class KitManagementMenu(val kit: Kit): Menu() {
                 kit.armorContent = profile.kitEditorData?.kit?.armorContent
             }
 
+            if (kit.editContents == null) {
+                kit.editContents = profile.kitEditorData?.kit?.editorItems
+            }
+
             profile.getKitStatistic(kit.name)?.replaceKit(index, kit)
 
             profile.kitEditorData?.selectedKit = kit
 
-            profile.save()
+            profile.save(true)
 
             KitEditorMenu(index).openMenu(player)
         }

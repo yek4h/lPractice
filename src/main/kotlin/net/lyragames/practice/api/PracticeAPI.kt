@@ -18,7 +18,7 @@ import java.util.*
 class PracticeAPI {
 
     fun retrieveProfile(uuid: UUID): Profile? {
-        val document = PracticePlugin.instance.practiceMongo.profiles.find(Filters.eq("uuid", uuid.toString())).first() ?: return null
+        val document = PracticePlugin.instance.mongoManager.profileCollection.find(Filters.eq("uuid", uuid.toString())).first() ?: return null
 
         val profile = Profile(uuid, null)
         profile.load(document)

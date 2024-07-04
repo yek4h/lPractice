@@ -6,7 +6,7 @@ import net.lyragames.practice.kit.Kit
 import net.lyragames.practice.match.MatchState
 import net.lyragames.practice.match.player.MatchPlayer
 import net.lyragames.practice.match.player.TeamMatchPlayer
-import net.lyragames.practice.profile.Profile
+import net.lyragames.practice.PracticePlugin
 import net.lyragames.practice.utils.CC
 import net.lyragames.practice.utils.LocationHelper
 import net.lyragames.practice.utils.PlayerUtil
@@ -69,7 +69,7 @@ class MLGRushMatch(kit: Kit, arena: Arena, ranked: Boolean) : TeamMatch(kit, are
 
     override fun addPlayer(player: Player, location: Location) {
         val team = findTeam()
-        val elo = Profile.getByUUID(player.uniqueId)!!.getKitStatistic(kit.name)!!.elo
+        val elo = PracticePlugin.instance.profileManager.findById(player.uniqueId)!!!!.getKitStatistic(kit.name)!!.elo
 
         val teamMatchPlayer = TeamMatchPlayer(player.uniqueId, player.name, team?.spawn!!, team.uuid, elo)
 
@@ -116,7 +116,7 @@ class MLGRushMatch(kit: Kit, arena: Arena, ranked: Boolean) : TeamMatch(kit, are
             "${CC.RED}YOU DIED!",
             "${CC.YELLOW}Respawning in ${CC.SECONDARY}<seconds>${CC.PRIMARY}...",
             4) {
-            val profile = Profile.getByUUID(player.uuid)
+            val profile = PracticePlugin.instance.profileManager.findById(player.uuid)
             player.player.teleport(player.spawn)
 
             PlayerUtil.reset(player.player)
@@ -153,7 +153,7 @@ class MLGRushMatch(kit: Kit, arena: Arena, ranked: Boolean) : TeamMatch(kit, are
                 }
 
                 val player = matchPlayer.player
-                val profile = Profile.getByUUID(player.uniqueId)
+                val profile = PracticePlugin.instance.profileManager.findById(player.uniqueId)!!
 
                 PlayerUtil.reset(player)
                 PlayerUtil.denyMovement(player)

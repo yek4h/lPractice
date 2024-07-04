@@ -1,9 +1,8 @@
 package net.lyragames.practice.command.admin
 
-import co.aikar.commands.BaseCommand
-import co.aikar.commands.CommandHelp
-import co.aikar.commands.annotation.*
-
+import com.jonahseguin.drink.annotation.Command
+import com.jonahseguin.drink.annotation.Require
+import com.jonahseguin.drink.annotation.Sender
 import net.lyragames.practice.PracticePlugin
 import net.lyragames.practice.constants.Constants
 import net.lyragames.practice.utils.CC
@@ -11,50 +10,62 @@ import net.lyragames.practice.utils.Cuboid
 import net.lyragames.practice.utils.LocationUtil
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
-@CommandAlias("ffa")
-@CommandPermission("lpractice.command.ffa.setup")
-object FFACommand: BaseCommand() {
-   @HelpCommand
-   @Syntax("[page]")
-   fun help(helpCommand: CommandHelp) {
-        helpCommand.showHelp()
 
+/*
+ * This project can't be redistributed without
+ * authorization of the developer
+ *
+ * Project @ lPractice
+ * @author yek4h © 2024
+ * Date: 17/06/2024
+*/
+
+class FFACommand {
+
+    @Command(name = "", desc = "FFA arena setup commands")
+    @Require("practice.command.ffa.setup")
+    fun help(@Sender sender: CommandSender) {
+        sender.sendMessage("""
+            ${CC.PRIMARY}FFA Commands:
+            ${CC.SECONDARY}/ffa spawn - Set the spawn of the FFA arena
+            ${CC.SECONDARY}/ffa min - Set the minimum point of the FFA safezone
+            ${CC.SECONDARY}/ffa max - Set the maximum point of the FFA safezone
+        """.trimIndent())
     }
 
-    @Subcommand("spawn|setspawn")
-    @Description("Set the spawn of the FFA arena")
-
-    fun spawn( player: CommandSender) {
-        Constants.FFA_SPAWN = (player as Player).location
+    @Command(name = "spawn", desc = "Set the spawn of the FFA arena", aliases = ["setspawn"])
+    @Require("practice.command.ffa.setup.spawn")
+    fun setSpawn(@Sender sender: CommandSender) {
+        val player = sender as? Player ?: return
+        Constants.FFA_SPAWN = player.location
         PracticePlugin.instance.ffaFile.config.set("SPAWN", LocationUtil.serialize(player.location))
         PracticePlugin.instance.ffaFile.save()
-
-        player.sendMessage("${CC.GREEN}Successfully set ffa spawn point!")
+        player.sendMessage("${CC.GREEN}Successfully set FFA spawn point!")
     }
 
-    @Subcommand("min")
-    @Description("Minimum point of the FFA safezone")
-    fun min(player: CommandSender) {
-        Constants.MIN = (player as Player).location
+    @Command(name = "min", desc = "Set the minimum point of the FFA safezone")
+    @Require("practice.command.ffa.setup.min")
+    fun setMin(@Sender sender: CommandSender) {
+        val player = sender as? Player ?: return
+        Constants.MIN = player.location
         PracticePlugin.instance.ffaFile.config.set("SAFE-ZONE.MIN", LocationUtil.serialize(player.location))
         PracticePlugin.instance.ffaFile.save()
-
-        player.sendMessage("${CC.GREEN}Successfully set ffa min location!")
-
-        if (Constants.MIN != null && Constants.MAX != null) {
-            Constants.SAFE_ZONE = Cuboid(Constants.MIN!!, Constants.MAX!!)
-        }
+        player.sendMessage("${CC.GREEN}Successfully set FFA min location!")
+        updateSafeZone()
     }
 
-    @Subcommand("max")
-    @Description("Maximum point of the FFA safezone")
-    fun max(player: CommandSender) {
-        Constants.MAX = (player as Player).location
+    @Command(name = "max", desc = "Set the maximum point of the FFA safezone")
+    @Require("practice.command.ffa.setup.max")
+    fun setMax(@Sender sender: CommandSender) {
+        val player = sender as? Player ?: return
+        Constants.MAX = player.location
         PracticePlugin.instance.ffaFile.config.set("SAFE-ZONE.MAX", LocationUtil.serialize(player.location))
         PracticePlugin.instance.ffaFile.save()
+        player.sendMessage("${CC.GREEN}Successfully set FFA max location!")
+        updateSafeZone()
+    }
 
-        player.sendMessage("${CC.GREEN}Successfully set ffa max location!")
-
+    private fun updateSafeZone() {
         if (Constants.MIN != null && Constants.MAX != null) {
             Constants.SAFE_ZONE = Cuboid(Constants.MIN!!, Constants.MAX!!)
         }

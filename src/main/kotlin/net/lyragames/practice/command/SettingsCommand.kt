@@ -1,17 +1,26 @@
 package net.lyragames.practice.command
 
-import co.aikar.commands.BaseCommand
-import co.aikar.commands.annotation.CommandAlias
-import co.aikar.commands.annotation.Subcommand
-
-import net.lyragames.practice.profile.settings.SettingsMenu
+import com.jonahseguin.drink.annotation.Command
+import com.jonahseguin.drink.annotation.Require
+import com.jonahseguin.drink.annotation.Sender
+import net.lyragames.practice.ui.SettingsMenu
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 
-object SettingsCommand: BaseCommand() {
+/*
+ * This project can't be redistributed without
+ * authorization of the developer
+ *
+ * Project @ lPractice
+ * @author yek4h © 2024
+ * Date: 17/06/2024
+*/
 
-    @CommandAlias("settings|lpractice:settings")
-    fun settings(player: CommandSender) {
-        SettingsMenu().openMenu(player as Player)
+class SettingsCommand {
+
+    @Command(name = "", desc = "Open settings menu")
+    fun settings(@Sender sender: CommandSender) {
+        val player = sender as Player
+        SettingsMenu().openMenu(player)
     }
 }

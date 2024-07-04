@@ -2,13 +2,12 @@ package net.lyragames.practice.match.impl
 
 import net.lyragames.practice.PracticePlugin
 import net.lyragames.practice.arena.Arena
-import net.lyragames.practice.arena.impl.bridge.StandaloneBridgeArena
+import net.lyragames.practice.arena.impl.StandaloneArena
 import net.lyragames.practice.kit.Kit
 import net.lyragames.practice.match.MatchState
 import net.lyragames.practice.match.player.MatchPlayer
 import net.lyragames.practice.match.player.TeamMatchPlayer
 import net.lyragames.practice.match.team.Team
-import net.lyragames.practice.profile.Profile
 import net.lyragames.practice.utils.CC
 import net.lyragames.practice.utils.PlayerUtil
 import net.lyragames.practice.utils.countdown.Countdown
@@ -29,22 +28,22 @@ class BridgeMatch(kit: Kit, arena: Arena, ranked: Boolean) : TeamMatch(kit, aren
         teams.clear()
 
         val team1 = Team("Red")
-        team1.spawn = (arena as StandaloneBridgeArena).redSpawn
-        team1.portal = arena.redPortal
+        team1.spawn = (arena as StandaloneArena).l1
+        team1.portal = arena.findClosestBlock(arena.l1, Material.ENDER_PORTAL)
         team1.color = CC.RED
         team1.coloredName = "${CC.RED}Red"
 
-        for (block in arena.redPortal!!.blocks) {
+        for (block in arena.findClosestBlock(arena.l1, Material.ENDER_PORTAL)!!.blocks) {
             block.type = Material.ENDER_PORTAL
         }
 
         val team2 = Team("Blue")
-        team2.spawn = arena.blueSpawn
-        team2.portal = arena.bluePortal
+        team2.spawn = arena.l2
+        team2.portal = arena.findClosestBlock(arena.l2, Material.ENDER_PORTAL)
         team2.color = CC.BLUE
         team2.coloredName = "${CC.BLUE}Blue"
 
-        for (block in arena.bluePortal!!.blocks) {
+        for (block in arena.findClosestBlock(arena.l2, Material.ENDER_PORTAL)!!.blocks) {
             block.type = Material.ENDER_PORTAL
         }
 
@@ -54,7 +53,7 @@ class BridgeMatch(kit: Kit, arena: Arena, ranked: Boolean) : TeamMatch(kit, aren
 
     override fun addPlayer(player: Player, location: Location) {
         val team = findTeam()
-        val elo = Profile.getByUUID(player.uniqueId)!!.getKitStatistic(kit.name)!!.elo
+        val elo = PracticePlugin.instance.profileManager.findById(player.uniqueId)!!!!.getKitStatistic(kit.name)!!.elo
 
         val teamMatchPlayer = TeamMatchPlayer(player.uniqueId, player.name, team?.spawn!!, team.uuid, elo)
 
@@ -124,7 +123,7 @@ class BridgeMatch(kit: Kit, arena: Arena, ranked: Boolean) : TeamMatch(kit, aren
                 if (matchPlayer.offline) continue
 
                 val player = matchPlayer.player
-                val profile = Profile.getByUUID(player.uniqueId)
+                val profile = PracticePlugin.instance.profileManager.findById(player.uniqueId)!!
 
                 if (profile!!.arrowCooldown != null) {
                     profile.arrowCooldown!!.cancel()
@@ -177,7 +176,7 @@ class BridgeMatch(kit: Kit, arena: Arena, ranked: Boolean) : TeamMatch(kit, aren
             sendMessage("${matchPlayer.coloredName} ${CC.PRIMARY}was killed by " + killer?.coloredName + "${CC.PRIMARY}!")
         }
 
-        val profile = Profile.getByUUID(matchPlayer.uuid)
+        val profile = PracticePlugin.instance.profileManager.findById(matchPlayer.uuid)
 
         if (profile!!.arrowCooldown != null) {
             profile.arrowCooldown!!.cancel()

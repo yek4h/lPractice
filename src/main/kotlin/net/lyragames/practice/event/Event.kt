@@ -7,7 +7,7 @@ import net.lyragames.practice.event.impl.TNTRunEvent
 import net.lyragames.practice.event.impl.TNTTagEvent
 import net.lyragames.practice.event.map.EventMap
 import net.lyragames.practice.event.player.EventPlayer
-import net.lyragames.practice.profile.Profile
+import net.lyragames.practice.PracticePlugin
 import net.lyragames.practice.profile.ProfileState
 import net.lyragames.practice.profile.hotbar.Hotbar
 import net.lyragames.practice.utils.CC
@@ -93,10 +93,10 @@ open class Event(val host: UUID, val eventMap: EventMap) {
     }
 
     open fun addPlayer(player: Player) {
-        val profile = Profile.getByUUID(player.uniqueId)
+        val profile = PracticePlugin.instance.profileManager.findById(player.uniqueId)!!
         val eventPlayer = EventPlayer(player.uniqueId, player.name)
 
-        profile?.state = ProfileState.EVENT
+        profile.state = ProfileState.EVENT
 
         players.forEach {
             it.player.showPlayer(player)
@@ -106,7 +106,7 @@ open class Event(val host: UUID, val eventMap: EventMap) {
         player.teleport(eventMap.spawn)
 
         players.add(eventPlayer)
-        Hotbar.giveHotbar(profile!!)
+        Hotbar.giveHotbar(profile)
 
         Bukkit.broadcastMessage("${CC.GREEN}${player.name}${CC.YELLOW} has joined the event. ${CC.GRAY}(${players.size}/${requiredPlayers})")
     }
@@ -123,7 +123,7 @@ open class Event(val host: UUID, val eventMap: EventMap) {
     }
 
     open fun removePlayer(player: Player) {
-        val profile = Profile.getByUUID(player.uniqueId)
+        val profile = PracticePlugin.instance.profileManager.findById(player.uniqueId)!!
         players.removeIf { it.uuid == player.uniqueId }
 
         players.forEach {
@@ -137,14 +137,14 @@ open class Event(val host: UUID, val eventMap: EventMap) {
 
         PlayerUtil.reset(player)
 
-        profile?.state = ProfileState.LOBBY
-        Hotbar.giveHotbar(profile!!)
+        profile.state = ProfileState.LOBBY
+        Hotbar.giveHotbar(profile)
     }
 
     open fun forceRemove(eventPlayer: EventPlayer) {
         if (eventPlayer.offline) return
 
-        val profile = Profile.getByUUID(eventPlayer.uuid)
+        val profile = PracticePlugin.instance.profileManager.findById(eventPlayer.uuid)!!
         val player = eventPlayer.player
 
         players.forEach {
@@ -160,8 +160,8 @@ open class Event(val host: UUID, val eventMap: EventMap) {
 
         PlayerUtil.reset(player)
 
-        profile?.state = ProfileState.LOBBY
-        Hotbar.giveHotbar(profile!!)
+        profile.state = ProfileState.LOBBY
+        Hotbar.giveHotbar(profile)
     }
 
     open fun canHit(player: Player, target: Player): Boolean {

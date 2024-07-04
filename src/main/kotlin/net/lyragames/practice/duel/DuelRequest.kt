@@ -1,13 +1,15 @@
 package net.lyragames.practice.duel
 
+import dev.ryu.core.bukkit.CoreAPI
 import net.lyragames.practice.Locale
 import net.lyragames.practice.arena.Arena
 import net.lyragames.practice.kit.Kit
-import net.lyragames.practice.profile.Profile
+import net.lyragames.practice.PracticePlugin
 import net.lyragames.practice.utils.CC
 import net.lyragames.practice.utils.PlayerUtil
 import net.lyragames.practice.utils.TextBuilder
 import org.bukkit.Bukkit
+import org.bukkit.ChatColor
 import java.util.*
 
 
@@ -33,11 +35,14 @@ class DuelRequest(var uuid: UUID, var target: UUID, var kit: Kit, var arena: Are
         val player = Bukkit.getPlayer(target)
         val sender = Bukkit.getPlayer(uuid)
 
-        val profile = Profile.getByUUID(target)
-        profile?.duelRequests?.add(this)
+        val profile = PracticePlugin.instance.profileManager.findById(target)!!
+        profile.duelRequests.add(this)
 
-        val message = TextBuilder()
-            .setText(Locale.DUEL_REQUEST.getMessage().replace("<ping>", "${PlayerUtil.getPing(sender)}").replace("<sender>", sender.name).replace("<kit>", kit.displayName))
+        val message = TextBuilder()             //.replace("<sender>", "${/*CoreAPI.grantSystem.findBestRank(CoreAPI.grantSystem.repository.findAllByPlayer(sender.uniqueId)).color*/}${sender.name}").replace("<kit>", kit.displayName ?: kit.name)))
+
+            .setText(CC.translate(Locale.DUEL_REQUEST.getMessage()
+                .replace("<ping>", "${PlayerUtil.getPing(sender)}")
+                .replace("<sender>", "${ChatColor.valueOf(CoreAPI.grantSystem.findBestRank(CoreAPI.grantSystem.repository.findAllByPlayer(sender.uniqueId)).color)}${sender.name}").replace("<kit>", kit.displayName ?: kit.name)))
             .then()
             .setText(Locale.DUEL_REQUEST_FOOTER.getMessage().replace("<arena>", arena.name))
             .then()

@@ -6,21 +6,20 @@ import net.lyragames.practice.event.EventType
 import net.lyragames.practice.event.impl.TNTRunEvent
 import net.lyragames.practice.event.map.impl.TNTRunMap
 import net.lyragames.practice.manager.EventManager
-import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.scheduler.BukkitRunnable
-
 
 /**
  * This Project is property of Zowpy © 2022
  * Redistribution of this Project is not allowed
- *
- * @author Zowpy
  * Created: 3/26/2022
  * Project: lPractice
+ *
+ * Updated by yek4h
+ *
  */
 
-object TNTEventBlockRemovalTask: BukkitRunnable() {
+object TNTEventBlockRemovalTask : BukkitRunnable() {
 
     init {
         this.runTaskTimerAsynchronously(PracticePlugin.instance, 20L, 7L)
@@ -31,13 +30,12 @@ object TNTEventBlockRemovalTask: BukkitRunnable() {
         if (currentEvent.state != EventState.FIGHTING) return
 
         if (currentEvent.type == EventType.TNT_RUN) {
-
             currentEvent as TNTRunEvent
 
-            for (eventPlayer in currentEvent.players) {
+            currentEvent.players.forEach { eventPlayer ->
                 val player = eventPlayer.player
 
-                if (player.location.y <= (currentEvent.eventMap as TNTRunMap).deadzone && !eventPlayer?.dead!!) {
+                if (player.location.y <= (currentEvent.eventMap as TNTRunMap).deadzone && !eventPlayer.dead) {
                     eventPlayer.dead = true
                     currentEvent.players.forEach { it.player.hidePlayer(eventPlayer.player) }
                     eventPlayer.player.allowFlight = true
@@ -45,7 +43,6 @@ object TNTEventBlockRemovalTask: BukkitRunnable() {
 
                     if (currentEvent.getAlivePlayers().size == 1) {
                         val winner = currentEvent.getAlivePlayers()[0]
-
                         currentEvent.endRound(winner)
                     }
                     return
@@ -54,12 +51,10 @@ object TNTEventBlockRemovalTask: BukkitRunnable() {
                 val block = player.location.subtract(0.0, 0.5, 0.0).block
 
                 if (block.type == Material.SAND) {
-
                     currentEvent.removedBlocks[block] = Material.SAND
                     block.type = Material.AIR
 
                     val tntBlock = block.location.subtract(0.0, 0.5, 0.0).block
-
                     if (tntBlock.type == Material.TNT) {
                         currentEvent.removedBlocks[tntBlock] = Material.TNT
                         tntBlock.type = Material.AIR

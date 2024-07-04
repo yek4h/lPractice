@@ -1,6 +1,6 @@
 package net.lyragames.practice.listener
 
-import net.lyragames.practice.profile.Profile
+import net.lyragames.practice.PracticePlugin
 import net.lyragames.practice.profile.ProfileState
 import org.bukkit.GameMode
 import org.bukkit.entity.EntityType
@@ -15,14 +15,14 @@ import org.bukkit.event.entity.FoodLevelChangeEvent
 import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.player.*
 
-object PreventionListener: Listener {
+object PreventionListener : Listener {
 
     @EventHandler(ignoreCancelled = true)
     fun onInventoryClick(event: InventoryClickEvent) {
-        val player = event.whoClicked as Player
-        val profile = Profile.getByUUID(player.uniqueId)
+        val player = event.whoClicked as? Player ?: return
+        val profile = PracticePlugin.instance.profileManager.findById(player.uniqueId) ?: return
 
-        if (profile!!.state == ProfileState.SPECTATING) {
+        if (profile.state == ProfileState.SPECTATING) {
             event.isCancelled = true
         }
     }
@@ -34,59 +34,39 @@ object PreventionListener: Listener {
 
     @EventHandler(ignoreCancelled = true)
     fun onDamage(event: EntityDamageEvent) {
-        if (event.entity is Player) {
-            val profile = Profile.getByUUID((event.entity as Player).player.uniqueId)
+        val player = event.entity as? Player ?: return
+        val profile = PracticePlugin.instance.profileManager.findById(player.uniqueId) ?: return
 
-            if (profile!!.state == ProfileState.LOBBY || profile.state == ProfileState.QUEUE || profile.state == ProfileState.SPECTATING) {
-                event.isCancelled = true
-            }
+        if (profile.state == ProfileState.LOBBY || profile.state == ProfileState.QUEUE || profile.state == ProfileState.SPECTATING) {
+            event.isCancelled = true
         }
     }
 
     @EventHandler(ignoreCancelled = true)
     fun onHunger(event: FoodLevelChangeEvent) {
-        val profile = Profile.getByUUID(event.entity.uniqueId)
+        val entity = event.entity as? Player ?: return
+        val profile = PracticePlugin.instance.profileManager.findById(entity.uniqueId) ?: return
 
-        if (profile?.state == ProfileState.LOBBY || profile?.state == ProfileState.SPECTATING || profile?.state == ProfileState.QUEUE) {
+        if (profile.state == ProfileState.LOBBY || profile.state == ProfileState.QUEUE || profile.state == ProfileState.SPECTATING) {
             event.isCancelled = true
         }
     }
 
     @EventHandler(ignoreCancelled = true)
     fun onSpawn(event: EntitySpawnEvent) {
-        /*if (event.entity.type == EntityType.PLAYER
-            || event.entity.type == EntityType.PAINTING
-            || event.entity.type == EntityType.ITEM_FRAME
-            || event.entity.type == EntityType.DROPPED_ITEM
-            || event.entity.type == EntityType.ARMOR_STAND
-            || event.entity.type == EntityType.FAKE_PLAYER
-            || event.entity.type == EntityType.FISHING_HOOK
-            || event.entity.type == EntityType.) return */
-
-        if (event.entity.type == EntityType.PLAYER || !event.entity.type.isAlive
-            || !event.entity.type.isSpawnable) return
-
-        event.isCancelled = true
-        event.entity.remove()
-    }
-
-    @EventHandler(ignoreCancelled = true)
-    fun onEntityDamage(event: EntityDamageEvent) {
-        if (event.entity is Player) {
-            val profile = Profile.getByUUID(event.entity.uniqueId)
-
-            if (profile?.state == ProfileState.LOBBY || profile?.state == ProfileState.QUEUE || profile?.state == ProfileState.SPECTATING) {
-                event.isCancelled = true
-            }
+        val type = event.entity.type
+        if (type == EntityType.PLAYER || !type.isAlive || !type.isSpawnable) {
+            event.isCancelled = true
+            event.entity.remove()
         }
     }
 
     @EventHandler(ignoreCancelled = true)
     fun onPickup(event: PlayerPickupItemEvent) {
         val player = event.player
-        val profile = Profile.getByUUID(player.uniqueId)
+        val profile = PracticePlugin.instance.profileManager.findById(player.uniqueId) ?: return
 
-        if (profile?.state == ProfileState.LOBBY || profile?.state == ProfileState.QUEUE || profile?.state == ProfileState.SPECTATING) {
+        if (profile.state == ProfileState.LOBBY || profile.state == ProfileState.QUEUE || profile.state == ProfileState.SPECTATING) {
             event.isCancelled = true
         }
     }
@@ -94,9 +74,9 @@ object PreventionListener: Listener {
     @EventHandler(ignoreCancelled = true)
     fun onDrop(event: PlayerDropItemEvent) {
         val player = event.player
-        val profile = Profile.getByUUID(player.uniqueId)
+        val profile = PracticePlugin.instance.profileManager.findById(player.uniqueId) ?: return
 
-        if (profile?.state == ProfileState.LOBBY || profile?.state == ProfileState.QUEUE || profile?.state == ProfileState.SPECTATING) {
+        if (profile.state == ProfileState.LOBBY || profile.state == ProfileState.QUEUE || profile.state == ProfileState.SPECTATING) {
             event.isCancelled = true
         }
     }
@@ -104,9 +84,9 @@ object PreventionListener: Listener {
     @EventHandler(ignoreCancelled = true)
     fun onLiquidFill(event: PlayerBucketFillEvent) {
         val player = event.player
-        val profile = Profile.getByUUID(player.uniqueId)
+        val profile = PracticePlugin.instance.profileManager.findById(player.uniqueId) ?: return
 
-        if (profile?.state == ProfileState.LOBBY || profile?.state == ProfileState.QUEUE || profile?.state == ProfileState.SPECTATING || profile?.state == ProfileState.FFA) {
+        if (profile.state == ProfileState.LOBBY || profile.state == ProfileState.QUEUE || profile.state == ProfileState.SPECTATING || profile.state == ProfileState.FFA) {
             event.isCancelled = true
         }
     }
@@ -114,9 +94,9 @@ object PreventionListener: Listener {
     @EventHandler(ignoreCancelled = true)
     fun onLiquidPlace(event: PlayerBucketEmptyEvent) {
         val player = event.player
-        val profile = Profile.getByUUID(player.uniqueId)
+        val profile = PracticePlugin.instance.profileManager.findById(player.uniqueId) ?: return
 
-        if (profile?.state == ProfileState.LOBBY || profile?.state == ProfileState.QUEUE || profile?.state == ProfileState.SPECTATING || profile?.state == ProfileState.FFA) {
+        if (profile.state == ProfileState.LOBBY || profile.state == ProfileState.QUEUE || profile.state == ProfileState.SPECTATING || profile.state == ProfileState.FFA) {
             event.isCancelled = true
         }
     }
@@ -124,40 +104,30 @@ object PreventionListener: Listener {
     @EventHandler(ignoreCancelled = true)
     fun onBreak(event: BlockBreakEvent) {
         val player = event.player
-        val profile = Profile.getByUUID(player.uniqueId)
+        val profile = PracticePlugin.instance.profileManager.findById(player.uniqueId) ?: return
 
-        if (profile?.state == ProfileState.SPECTATING) {
-            event.isCancelled = true
-        }
-
-        if (profile?.state == ProfileState.LOBBY || profile?.state == ProfileState.QUEUE) {
-            if (!profile.canBuild) {
-                event.isCancelled = true
+        when (profile.state) {
+            ProfileState.SPECTATING -> event.isCancelled = true
+            ProfileState.LOBBY, ProfileState.QUEUE -> if (!profile.canBuild) event.isCancelled = true
+            ProfileState.FFA -> event.isCancelled = true
+            else -> {
+                // Handle other states if necessary
             }
-        }
-
-        if (profile?.state == ProfileState.FFA) {
-            event.isCancelled = true
         }
     }
 
     @EventHandler(ignoreCancelled = true)
     fun onPlace(event: BlockPlaceEvent) {
         val player = event.player
-        val profile = Profile.getByUUID(player.uniqueId)
+        val profile = PracticePlugin.instance.profileManager.findById(player.uniqueId) ?: return
 
-        if (profile?.state == ProfileState.SPECTATING) {
-            event.isCancelled = true
-        }
-
-        if (profile?.state == ProfileState.LOBBY || profile?.state == ProfileState.QUEUE) {
-            if (player.gameMode != GameMode.CREATIVE && profile.canBuild) {
-                event.isCancelled = true
+        when (profile.state) {
+            ProfileState.SPECTATING -> event.isCancelled = true
+            ProfileState.LOBBY, ProfileState.QUEUE -> if (player.gameMode != GameMode.CREATIVE && !profile.canBuild) event.isCancelled = true
+            ProfileState.FFA -> event.isCancelled = true
+            else -> {
+                // Handle other states if necessary
             }
-        }
-
-        if (profile?.state == ProfileState.FFA) {
-            event.isCancelled = true
         }
     }
 }

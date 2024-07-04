@@ -1,7 +1,7 @@
 package net.lyragames.practice.kit.admin
 
-import me.zowpy.menu.Menu
-import me.zowpy.menu.buttons.Button
+import rip.katz.api.menu.Menu
+import rip.katz.api.menu.Button
 import net.lyragames.practice.kit.Kit
 import net.lyragames.practice.utils.CC
 import net.lyragames.practice.utils.ItemBuilder

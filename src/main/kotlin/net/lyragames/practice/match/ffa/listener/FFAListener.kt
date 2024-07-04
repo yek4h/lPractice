@@ -2,7 +2,7 @@ package net.lyragames.practice.match.ffa.listener
 
 import net.lyragames.practice.constants.Constants
 import net.lyragames.practice.manager.FFAManager
-import net.lyragames.practice.profile.Profile
+import net.lyragames.practice.PracticePlugin
 import net.lyragames.practice.profile.ProfileState
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
@@ -16,10 +16,10 @@ import org.bukkit.event.player.PlayerPickupItemEvent
 
 object FFAListener : Listener {
 
-    @EventHandler
+    /*@EventHandler
     fun onDrop(event: PlayerDropItemEvent) {
         val player = event.player
-        val profile = Profile.getByUUID(player.uniqueId)
+        val profile = PracticePlugin.instance.profileManager.findById(player.uniqueId)!!
 
         if (profile?.state == ProfileState.FFA) {
             val ffa = FFAManager.getByUUID(profile.ffa!!) ?: return
@@ -31,7 +31,7 @@ object FFAListener : Listener {
     @EventHandler
     fun onPickup(event: PlayerPickupItemEvent) {
         val player = event.player
-        val profile = Profile.getByUUID(player.uniqueId)
+        val profile = PracticePlugin.instance.profileManager.findById(player.uniqueId)!!
 
         if (profile?.state == ProfileState.FFA) {
             val ffa = FFAManager.getByUUID(profile.ffa!!) ?: return
@@ -42,7 +42,7 @@ object FFAListener : Listener {
                 event.isCancelled = true
             }
         }
-    }
+    }*/
 
     @EventHandler(ignoreCancelled = true)
     fun onHit(event: EntityDamageByEntityEvent) {
@@ -50,8 +50,8 @@ object FFAListener : Listener {
             val player = event.entity as Player
             val damager = event.damager as Player
 
-            val profile = Profile.getByUUID(player.uniqueId)
-            val profile1 = Profile.getByUUID(damager.uniqueId)
+            val profile = PracticePlugin.instance.profileManager.findById(player.uniqueId)!!
+            val profile1 = PracticePlugin.instance.profileManager.findById(damager.uniqueId)
 
             if (profile?.state == ProfileState.FFA && profile1?.state == ProfileState.FFA) {
 
@@ -77,7 +77,7 @@ object FFAListener : Listener {
     @EventHandler
     fun onDeath(event: PlayerDeathEvent) {
         val player = event.entity as Player
-        val profile = Profile.getByUUID(player.uniqueId)
+        val profile = PracticePlugin.instance.profileManager.findById(player.uniqueId)!!
 
         if (profile!!.state == ProfileState.FFA) {
             val ffa = FFAManager.getByUUID(profile.ffa!!)
@@ -101,12 +101,12 @@ object FFAListener : Listener {
 
     @EventHandler
     fun onHunger(event: FoodLevelChangeEvent) {
-        val profile = Profile.getByUUID(event.entity.uniqueId)
+        val profile = PracticePlugin.instance.profileManager.findById(event.entity.uniqueId)
 
         if (profile?.state == ProfileState.FFA) {
             val ffaMatch = FFAManager.getByUUID(profile.ffa!!) ?: return
 
-            if (!ffaMatch.kit.kitData.hunger) {
+            if (!ffaMatch.kit.hunger) {
                 event.isCancelled = true
             }
         }
@@ -115,13 +115,13 @@ object FFAListener : Listener {
     @EventHandler
     fun onRegen(event: EntityRegainHealthEvent) {
         if (event.entity is Player) {
-            val profile = Profile.getByUUID((event.entity as Player).player.uniqueId)
+            val profile = PracticePlugin.instance.profileManager.findById((event.entity as Player).player.uniqueId)
 
             if (profile!!.state == ProfileState.FFA) {
                 val ffa = FFAManager.getByUUID(profile.ffa!!)
                 val kit = ffa!!.kit
 
-                if (!kit.kitData.regeneration && event.regainReason == EntityRegainHealthEvent.RegainReason.REGEN) {
+                if (!kit.regeneration && event.regainReason == EntityRegainHealthEvent.RegainReason.REGEN) {
                     event.isCancelled = true
                 }
             }

@@ -1,7 +1,8 @@
 package net.lyragames.practice.party.duel.procedure.menu
 
-import me.zowpy.menu.Menu
-import me.zowpy.menu.buttons.Button
+import net.lyragames.practice.PracticePlugin
+import rip.katz.api.menu.Menu
+import rip.katz.api.menu.Button
 import net.lyragames.practice.kit.Kit
 import net.lyragames.practice.manager.ArenaManager
 import net.lyragames.practice.party.duel.procedure.PartyDuelProcedure
@@ -39,7 +40,7 @@ class PartyDuelKitSelectMenu: Menu() {
     override fun getButtons(p0: Player?): MutableMap<Int, Button> {
         val toReturn: MutableMap<Int, Button> = mutableMapOf()
 
-        for (kit in Kit.kits) {
+        for (kit in PracticePlugin.instance.kitManager.kits.values) {
             toReturn[toReturn.size] = object : Button() {
                 override fun getButtonItem(p0: Player?): ItemStack {
                     return ItemBuilder(kit.displayItem)

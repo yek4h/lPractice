@@ -27,6 +27,7 @@ object EditKitSerializer: JsonSerializer<EditedKit>, JsonDeserializer<EditedKit>
         jsonObject.addProperty("name", p0.name)
         jsonObject.addProperty("content", InventoryUtil.serializeInventory(p0.content))
         jsonObject.addProperty("armorContent", InventoryUtil.serializeInventory(p0.armorContent))
+        jsonObject.addProperty("editContents", InventoryUtil.serializeInventory(p0.editContents))
 
         return jsonObject
     }
@@ -40,6 +41,7 @@ object EditKitSerializer: JsonSerializer<EditedKit>, JsonDeserializer<EditedKit>
         val editedKit = EditedKit(jsonObject.get("name").asString)
         editedKit.content = InventoryUtil.deserializeInventory(jsonObject.get("content").asString)
         editedKit.armorContent = InventoryUtil.deserializeInventory(jsonObject.get("armorContent").asString)
+        editedKit.editContents = InventoryUtil.deserializeInventory(jsonObject.get("editContents").asString)
 
         return editedKit
     }

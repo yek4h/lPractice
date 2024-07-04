@@ -2,12 +2,12 @@ package net.lyragames.practice.match.impl
 
 import net.lyragames.practice.Locale
 import net.lyragames.practice.arena.Arena
-import net.lyragames.practice.arena.impl.bedwars.StandaloneBedWarsArena
 import net.lyragames.practice.kit.Kit
 import net.lyragames.practice.match.player.MatchPlayer
 import net.lyragames.practice.match.player.TeamMatchPlayer
 import net.lyragames.practice.match.team.Team
-import net.lyragames.practice.profile.Profile
+import net.lyragames.practice.PracticePlugin
+import net.lyragames.practice.arena.impl.StandaloneArena
 import net.lyragames.practice.utils.CC
 import net.lyragames.practice.utils.LocationHelper
 import net.lyragames.practice.utils.PlayerUtil
@@ -40,14 +40,14 @@ class BedFightMatch(kit: Kit, arena: Arena, ranked: Boolean) : TeamMatch(kit, ar
         teams.clear()
 
         val team1 = Team("Red")
-        team1.spawn = (arena as StandaloneBedWarsArena).redSpawn
-        team1.bedLocation = arena.redBed
+        team1.spawn = (arena as StandaloneArena).l1
+        team1.bedLocation = arena.findClosestBlockByLocation(arena.l1, Material.BED_BLOCK)
         team1.color = CC.RED
         team1.coloredName = "${CC.RED}Red"
 
         val team2 = Team("Blue")
-        team2.spawn = arena.blueSpawn
-        team2.bedLocation = arena.blueBed
+        team2.spawn = arena.l2
+        team2.bedLocation = arena.findClosestBlockByLocation(arena.l2, Material.BED_BLOCK)
         team2.coloredName = "${CC.BLUE}Blue"
         team2.color = CC.BLUE
 
@@ -58,7 +58,7 @@ class BedFightMatch(kit: Kit, arena: Arena, ranked: Boolean) : TeamMatch(kit, ar
     override fun addPlayer(player: Player, location: Location)
     {
         val team = findTeam()
-        val elo = Profile.getByUUID(player.uniqueId)!!.getKitStatistic(kit.name)!!.elo
+        val elo = PracticePlugin.instance.profileManager.findById(player.uniqueId)!!!!.getKitStatistic(kit.name)!!.elo
 
         val teamMatchPlayer = TeamMatchPlayer(player.uniqueId, player.name, team?.spawn!!, team.uuid, elo)
 
@@ -74,8 +74,7 @@ class BedFightMatch(kit: Kit, arena: Arena, ranked: Boolean) : TeamMatch(kit, ar
         players.add(teamMatchPlayer)
     }
 
-    override fun reset()
-    {
+    override fun reset() {
         super.reset()
 
         bedBroken.forEach { (block, head) ->
@@ -93,8 +92,7 @@ class BedFightMatch(kit: Kit, arena: Arena, ranked: Boolean) : TeamMatch(kit, ar
         }
     }
 
-    fun handleBreak(event: BlockBreakEvent)
-    {
+    fun handleBreak(event: BlockBreakEvent) {
 
         val matchPlayer = getMatchPlayer(event.player.uniqueId)
 
@@ -224,7 +222,7 @@ class BedFightMatch(kit: Kit, arena: Arena, ranked: Boolean) : TeamMatch(kit, ar
             "${CC.YELLOW}Respawning in ${CC.SECONDARY}<seconds>${CC.PRIMARY}...",
             4
         ) {
-            val profile = Profile.getByUUID(player.uuid)
+            val profile = PracticePlugin.instance.profileManager.findById(player.uuid)
             player.player.teleport(player.spawn)
 
             PlayerUtil.reset(player.player)

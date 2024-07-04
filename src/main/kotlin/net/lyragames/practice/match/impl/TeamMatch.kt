@@ -9,7 +9,7 @@ import net.lyragames.practice.match.player.MatchPlayer
 import net.lyragames.practice.match.player.TeamMatchPlayer
 import net.lyragames.practice.match.snapshot.MatchSnapshot
 import net.lyragames.practice.match.team.Team
-import net.lyragames.practice.profile.Profile
+import net.lyragames.practice.PracticePlugin
 import net.lyragames.practice.utils.CC
 import net.lyragames.practice.utils.PlayerUtil
 import org.bukkit.Location
@@ -131,7 +131,7 @@ open class TeamMatch(kit: Kit, arena: Arena, ranked: Boolean) : Match(kit, arena
 
     override fun addPlayer(player: Player, location: Location) {
         val team = findTeam()
-        val elo = Profile.getByUUID(player.uniqueId)!!.getKitStatistic(kit.name)!!.elo
+        val elo = PracticePlugin.instance.profileManager.findById(player.uniqueId)!!!!.getKitStatistic(kit.name)!!.elo
 
         val teamMatchPlayer = TeamMatchPlayer(player.uniqueId, player.name, team?.spawn!!, team.uuid, elo)
 
@@ -149,7 +149,7 @@ open class TeamMatch(kit: Kit, arena: Arena, ranked: Boolean) : Match(kit, arena
     }
 
     fun addPlayer(player: Player, team: Team) {
-        val elo = Profile.getByUUID(player.uniqueId)!!.getKitStatistic(kit.name)!!.elo
+        val elo = PracticePlugin.instance.profileManager.findById(player.uniqueId)!!!!.getKitStatistic(kit.name)!!.elo
 
         val teamMatchPlayer = TeamMatchPlayer(player.uniqueId, player.name, team.spawn!!, team.uuid, elo)
 
@@ -166,7 +166,17 @@ open class TeamMatch(kit: Kit, arena: Arena, ranked: Boolean) : Match(kit, arena
         val team = getTeam((getMatchPlayer(uuid) as TeamMatchPlayer).teamUniqueId)
         val opponentTeam = getOpponentTeam(team!!)
 
-        return Joiner.on(", ").join(opponentTeam!!.players.stream().map { it.name }.collect(Collectors.toList()))
+        return Joiner.on(", ").join(opponentTeam!!.players.stream().map { if (isAlivePlayer(it.uuid)) it.name else "&8&m&o${it.name}" }.collect(Collectors.toList()))
+    }
+
+    fun isAlivePlayer(uuid: UUID): Boolean {
+        players.filter {
+            uuid == it.uuid
+        }.filterNot {
+            return it.dead
+        }
+
+        return false
     }
 
     fun getPlayerString(uuid: UUID): String? {
