@@ -1,7 +1,6 @@
 package net.lyragames.practice.adapter
 
-import dev.yair.deboy.ScoreInterface
-import dev.yair.deboy.annotations.*
+import io.github.thatkawaiisam.assemble.AssembleAdapter
 import net.lyragames.practice.PracticePlugin
 import net.lyragames.practice.event.EventType
 import net.lyragames.practice.manager.EventManager
@@ -25,10 +24,8 @@ import net.lyragames.practice.utils.CC
 import net.lyragames.practice.utils.ConfigFile
 import net.lyragames.practice.utils.PlayerUtil
 import net.lyragames.practice.utils.TimeUtil
-import okhttp3.MultipartBody.Part
 import org.apache.commons.lang.StringUtils
 import org.bukkit.Bukkit
-import org.bukkit.ChatColor
 import org.bukkit.craftbukkit.v1_8_R3.entity.CraftPlayer
 import org.bukkit.entity.Player
 import java.util.stream.Collectors
@@ -44,9 +41,7 @@ import java.util.stream.Collectors
 */
 
 
-@Async(true)
-@TickUpdate(2L)
-class ScoreboardAdapter(private val configFile: ConfigFile) : ScoreInterface {
+class ScoreboardAdapter(private val configFile: ConfigFile) : AssembleAdapter {
 
     override fun getTitle(player: Player): String {
         if (configFile.getString("scoreboard.title").contains("ANIMATED-TEXT")) {

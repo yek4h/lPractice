@@ -38,9 +38,8 @@ dependencies {
     implementation 'com.jonahseguin:drink:1.0.5'
     implementation 'com.google.code.gson:gson:2.9.0'
     implementation 'org.mongodb:mongo-java-driver:3.12.10'
-    implementation 'io.github.thatkawaiisam:assemble:1.0-SNAPSHOT'
+    implementation 'io.github.thatkawaiisam:assemble:1.1-OPTIMIZED' //This can be changed by 1.0-SNAPSHOT because I use a custom version
     implementation 'com.github.cryptomorin:XSeries:7.9.1.1'
-    implementation 'dev.yair.deboy:Deboy:1.0-SNAPSHOT'
 
     compileOnly 'dev.ryu.core:bukkit:1.5-SNAPSHOT'
     compileOnly 'com.comphenix.protocol:ProtocolLib:4.7.0'

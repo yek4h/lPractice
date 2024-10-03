@@ -6,6 +6,8 @@ import com.google.gson.LongSerializationPolicy
 import com.jonahseguin.drink.CommandService
 import com.jonahseguin.drink.Drink
 import com.mongodb.client.MongoDatabase
+import io.github.thatkawaiisam.assemble.Assemble
+import io.github.thatkawaiisam.assemble.AssembleStyle
 import net.lyragames.practice.adapter.ScoreboardAdapter
 import net.lyragames.practice.api.PracticeAPI
 import net.lyragames.practice.arena.Arena
@@ -43,7 +45,6 @@ import net.lyragames.practice.utils.ConfigFile
 import net.lyragames.practice.utils.InventoryUtil
 import net.lyragames.practice.utils.item.ItemListener
 import net.lyragames.practice.utils.providers.*
-import dev.yair.deboy.Deboy
 import org.bukkit.Material
 import org.bukkit.entity.ExperienceOrb
 import org.bukkit.entity.Item
@@ -74,7 +75,6 @@ class PracticePlugin : JavaPlugin() {
     lateinit var animatedTextManagerFooter: AnimatedTextManager
     lateinit var animatedTextManagerTitle: AnimatedTextManager
     lateinit var hologramManager: HologramManager
-    lateinit var deboy: Deboy
 
     override fun onEnable() {
         commandService = Drink.get(this)
@@ -143,7 +143,9 @@ class PracticePlugin : JavaPlugin() {
 
         // Setup Scoreboard
         if (scoreboardFile.getBoolean("scoreboard.enabled")) {
-            deboy = Deboy(this, ScoreboardAdapter(scoreboardFile))
+            val assemble = Assemble(this, ScoreboardAdapter(scoreboardFile))
+            assemble.ticks = 2
+            assemble.assembleStyle = AssembleStyle.MODERN
         }
         logger.info("Scoreboard setup completed")
 
@@ -338,4 +340,6 @@ class PracticePlugin : JavaPlugin() {
             .registerTypeHierarchyAdapter(DuelRequest::class.java, DuelRequestGsonAdapter)
             .create()
     }
+
+
 }
